@@ -29804,4 +29804,3 @@
 ./ncbi_genomes/ncbi_dataset/data/GCF_013340765.1/GCF_013340765.1_NAS2_1.0_protein.faa
 ./ncbi_genomes/ncbi_dataset/data/GCF_013423785.1/GCF_013423785.1_ASM1342378v1_protein.faa
 ./ncbi_genomes/ncbi_dataset/data/GCF_014218355.1/GCF_014218355.1_ASM1421835v1_protein.faa
-./.faa

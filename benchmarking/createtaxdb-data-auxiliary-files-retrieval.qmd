@@ -1,0 +1,95 @@
+---
+title: "Benchmarking nf-core/createtaxdb auxiliary files retrieval"
+author: "James Fellows Yates"
+format: html
+---
+
+## Introduction
+
+In addition to the reference genome files themselves, most classifier database building tools require auxiliary taxonomy metadata files.
+
+Not all classifiers use the same taxonomy files.
+Therefore we will need to download and prepare a range of files for the building itself.
+
+More information about what is contained by these files can be found on the [nf-core/createtaxdb FAQ](https://nf-co.re/createtaxdb/2.1.0/docs/usage/usage/faq/).
+
+## Requirements
+
+Command line tools used in this notebook includes:
+
+- `curl` (v8.5.0 (x86_64-pc-linux-gnu))
+- `gunzip` (gunzip (gzip) 1.10)
+- `tar` (tar (GNU tar) 1.34)
+- `awk` (GNU Awk 4.2.1, API: 2.0)
+
+## Download and prepare files
+
+### NCBI taxdump files
+
+The most common set of auxiliary taxonomy metadata files used by the tools are from the NCBI servers:
+
+- `names.dmp` from [`pub/taxonomy`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/)
+- `nodes.dmp` from  from [`pub/taxonomy`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/)
+- `nucl_gb.accession2taxid.gz` from [`pub/taxonomy/accession2taxid`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/)
+
+While not used directly, we will also need to download the following, to make a variant of this file for DIAMOND.
+
+- `prot.accession2taxid.gz` from [`pub/taxonomy/accession2taxid`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/)
+
+We can download (2026-03-17) these with:
+
+```{bash}
+#| eval: false
+
+## For nodes and names dmp files
+curl -o taxdump.tar.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+
+## for accession2taxid files
+curl -o nucl_gb.accession2taxid.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz
+curl -o prot.accession2taxid.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+ 
+gunzip *
+tar xvf taxdump.tar
+rm taxdmp.tar
+```
+
+### NCBI genome.sizes
+
+We can download the NCBI genome-sizes file:
+
+```{bash}
+#| eval: false
+
+curl -o species_genome_size.txt https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/species_genome_size.txt
+```
+
+### Create nucl2taxid
+
+To create a Kraken2 and co like `nucl2taxid` file, you can use the following `awk` command
+
+```{bash}
+#| eval: false
+
+awk -v OFS='\t' 'NR>1 {print $2, $3}' nucl_gb.accession2taxid > nucl2taxid.map
+```
+
+### Create prot2taxid
+
+To create a DIAMOND compatible `prot2taxid` file, you can use a similar `awk` command above, just retaining the header
+
+```{bash}
+#| eval: false
+
+awk -v OFS='\t' '{print $2, $3}' prot.accession2taxid > prot2taxid.map
+```
+
+### Download MALT db
+
+To get the MALT taxonomy mappings, we download from the MEGAN website, and unzip
+
+```{bash}
+#| eval: false
+
+curl -o megan-nucl-Feb2022.db.zip https://software-ab.cs.uni-tuebingen.de/download/megan6/megan-nucl-Feb2022.db.zip
+```
+
