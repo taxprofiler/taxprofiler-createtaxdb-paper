@@ -1,0 +1,58 @@
+---
+title: "Benchmarking nf-core/createtaxdb pipeline execution"
+author: "James Fellows Yates"
+format: html
+---
+
+## Introduction
+
+The notebook describes the set up of the execution of the nf-core/createtaxdb benchmarking run.
+
+## Requirements
+
+Command line tools used in this notebook includes:
+
+- `nextflow` (version 25.10.4 build 11173)
+
+## Retrieving pipeline
+
+We will benchmarking with v2.1.0 of nf-core/createtaxdb
+
+```{bash}
+nextflow pull nf-core/createtaxdb -r 2.1.0
+```
+
+## Pipeline execution
+
+Make a fresh screen session for safety
+
+```{bash}
+screen -R ctb
+```
+
+```{bash}
+nextflow run nf-core/createtaxdb -r 2.1.0 \
+--input samplesheet.csv \
+--outdir s3://createtaxdb-output/results/ \
+--dbname benchmark \
+--accession2taxid s3://createtaxdb-input/auxiliary-files/nucl_gb.accession2taxid \
+--prot2taxid s3://createtaxdb-input/auxiliary-files/prot2taxid.map \
+--nucl2taxid s3://createtaxdb-input/auxiliary-files/nucl2taxid.map \
+--nodesdmp s3://createtaxdb-input/auxiliary-files/nodes.dmp \
+--namesdmp s3://createtaxdb-input/auxiliary-files/names.dmp \
+--genomesizes s3://createtaxdb-input/auxiliary-files/species_genome_size.txt \
+--build_bracken \
+--build_centrifuge \
+--build_diamond \
+--build_ganon \
+--build_kaiju \
+--build_kmcp \
+--build_kraken2 \
+--build_krakenuniq \
+ --krakenuniq_build_options "--jellyfish-bin \"\$(which jellyfish)\"" \
+--build_sylph \
+--build_metacache \
+-w work/
+```
+
+
