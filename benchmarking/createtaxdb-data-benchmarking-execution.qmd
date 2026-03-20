@@ -40,7 +40,7 @@ nextflow run nf-core/createtaxdb -r 2.1.0 \
 --nucl2taxid s3://createtaxdb-input/auxiliary-files/nucl2taxid.map \
 --nodesdmp s3://createtaxdb-input/auxiliary-files/nodes.dmp \
 --namesdmp s3://createtaxdb-input/auxiliary-files/names.dmp \
---genomesizes s3://createtaxdb-input/auxiliary-files/species_genome_size.txt \
+--genomesizes s3://createtaxdb-input/auxiliary-files/species_genome_size.txt.gz \
 --build_bracken \
 --build_centrifuge \
 --build_diamond \
@@ -52,7 +52,34 @@ nextflow run nf-core/createtaxdb -r 2.1.0 \
  --krakenuniq_build_options "--jellyfish-bin \"\$(which jellyfish)\"" \
 --build_sylph \
 --build_metacache \
--w work/
+-w work/ \
+-c custom.config
 ```
+
+<!--
+nextflow run nf-core/createtaxdb -r 2.1.0 \
+--input samplesheet_raven.csv \
+-profile mpcdf,raven \
+--outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results/ \
+--dbname benchmark \
+--accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
+--prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
+--nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
+--nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
+--namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
+--genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt \
+--build_bracken \
+--build_centrifuge \
+--build_diamond \
+--build_ganon \
+--build_kaiju \
+--build_kmcp \
+--build_kraken2 \
+--build_krakenuniq \
+--krakenuniq_build_options "--jellyfish-bin \"\$(which jellyfish)\"" \
+--build_sylph \
+--build_metacache \
+-w work/
+-->
 
 
