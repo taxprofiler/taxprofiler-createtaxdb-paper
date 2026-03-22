@@ -61,6 +61,7 @@ We can download the NCBI genome-sizes file:
 #| eval: false
 
 curl -o species_genome_size.txt https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/species_genome_size.txt
+gzip species_genome_size.txt
 ```
 
 ### Create nucl2taxid
