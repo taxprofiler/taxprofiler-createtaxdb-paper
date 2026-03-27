@@ -1,0 +1,15 @@
+---
+title: "nf-core/createtaxdb data retrieval preparation for clinical metagenomics case study"
+author: "Sofia Stamouli"
+format: html
+---
+
+## Introduction
+
+This notebook describes how the genomes for testing nf-core/createtaxdb in the clinical metagenomics case study were
+selected.The genomes used for presenting the application of nf-core/taxprofiler in the clinical metagenomics case study were retrieved from https://benlangmead.github.io/aws-indexes/k2 using PlusPF (2/26/2026). The genomes were used to build Centrifuge and DIAMOND databases with nf-core/createtaxdb. To ensure consistency in the analysis,we also built a Kraken2 database using nf-core/createtaxdb, even though a prebuilt database is available from the same source.
+
+The clinical samples were further analysed with nf-core/taxprofiler.
+
+## Data retrieval
+
