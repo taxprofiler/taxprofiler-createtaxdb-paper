@@ -13,3 +13,15 @@ The clinical samples were further analysed with nf-core/taxprofiler.
 
 ## Data retrieval
 
+Download the list of genomes necessary to build the databases for the clinical metagenomics case study:
+
+```{bash}
+wget https://genome-idx.s3.amazonaws.com/kraken/pluspf_20260226/library_report.tsv
+```
+
+The format of this file is as follows:
+
+| Library  | Sequence Name                                                                 | URL                                                                                           |
+|----------|-------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| plasmid  | NZ_CM002625.1 Xanthomonas campestris pv. campestris str. CFBP 12824 plasmid unnamed3, whole genome shotgun sequence | genomes/refseq/plasmid/plasmid.5.1.genomic.fna.gz |
+| bacteria | NZ_CABWXX010000283.1 Salmonella enterica subsp. enterica serovar Derby isolate ER1175, whole genome shotgun sequence | https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/902/509/465/GCF_902509465.1_assembly/GCF_902509465.1_assembly_genomic.fna.gz |
