@@ -49,7 +49,7 @@ grep -e "/2604" sequencing_reads/PRJEB44507.tsv > sequencing_reads/PRJEB44507_26
 
 ## To Download
 for i in $(awk -F '\t' '{ print $19 }' sequencing_reads/PRJEB44507_2604only.tsv); do
-  echo curl $(echo $i | cut -d ';' -f 1) --remote-name --create-dirs --output-dir sequencing_reads
-  echo curl $(echo $i | cut -d ';' -f 2) --remote-name --create-dirs --output-dir sequencing_reads
+  curl $(echo $i | cut -d ';' -f 1) --remote-name --create-dirs --output-dir sequencing_reads
+  curl $(echo $i | cut -d ';' -f 2) --remote-name --create-dirs --output-dir sequencing_reads
 done
 ```
