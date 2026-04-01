@@ -61,6 +61,8 @@ nextflow run nf-core/createtaxdb -r 2.1.0 \
 ```
 
 <!--
+RAVEN
+
 nextflow run nf-core/createtaxdb \
  -r 2.1.0 \
  --input samplesheet_raven.csv \
@@ -90,6 +92,104 @@ nextflow run nf-core/createtaxdb \
  -c custom.config \
 -->
 
+<!--
+DENBI
+
+nextflow run nf-core/createtaxdb \
+-r 2.1.0 \
+--input samplesheet_denbi.csv \
+-profile docker \
+--outdir s3://createtaxdb-output/results_30k/ \
+--dbname benchmark \
+--accession2taxid /vol/permanent/benchmarking/createtaxdb/auxiliary-files/nucl_gb.accession2taxid \
+--prot2taxid /vol/permanent/benchmarking/createtaxdb/auxiliary-files/prot2taxid.map \
+--nucl2taxid /vol/permanent/benchmarking/createtaxdb/auxiliary-files/nucl2taxid.map \
+--nodesdmp /vol/permanent/benchmarking/createtaxdb/auxiliary-files/nodes.dmp \
+--namesdmp /vol/permanent/benchmarking/createtaxdb/auxiliary-files/names.dmp \
+--genomesizes /vol/permanent/benchmarking/createtaxdb/auxiliary-files/species_genome_size.txt.gz \
+--build_bracken \
+--build_centrifuge \
+--build_diamond \
+--build_ganon \
+--build_kaiju \
+--build_kmcp \
+--kmcp_compute_options="--by-seq" \
+--build_kraken2 \
+--build_krakenuniq \
+--krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
+--build_sylph \
+--build_metacache \
+-w work/ \
+-resume \
+-c custom_denbi.config \
+-->
+
+The final custom config (optimised for use on the infrastructure) on the two infrastructures used for testing was:
+
+```{groovy}
+### RAVEN
+process {
+  withName: 'KRAKEN2_BUILD'{
+    memory = '240.GB'
+    cpus   = '72'
+  }
+  withName: 'BRACKEN_BUILD'{
+    memory = '240.GB'
+    cpus   = '72'
+  }
+  withName: 'METACACHE_BUILD' {
+    memory = '240.GB'
+    cpus = '72'	
+  }
+  withName: 'KRAKENUNIQ_BUILD' {
+    memory = '2047.GB'
+    cpus = '72'
+    time = '24.h'
+  }
+  withName: 'KMCP_COMPUTE' {
+    memory = '2047.GB'
+      cpus = '72'
+  }
+  withName: 'CENTRIFUGE_BUILD' {
+    memory = '2047.GB'
+    cpus = '72'
+  }
+}
+
+## DENBI
+process {
+  withName: 'METACACHE_BUILD' {
+    memory = '128.GB'
+    cpus   = 56
+  }
+
+  withName: 'KRAKEN2_ADD'{
+    memory = '128.GB'
+    cpus   = 56
+  }
+
+  withName: 'KRAKEN2_BUILD'{
+    memory = '128.GB'
+    cpus   = 56
+  }
+  withName: 'BRACKEN_BUILD'{
+    memory = '128.GB'
+    cpus   = 56
+  }
+  withName: 'KRAKENUNIQ_BUILD' {
+    memory = '900.GB'
+    cpus = 56
+  }
+  withName: 'CENTRIFUGE_BUILD' {
+    memory = '900.GB'
+    cpus = 56
+  }
+}
+
+```
+
+
+
 ## Harddrive usage
 
 The resulting results directory was
@@ -98,19 +198,19 @@ The resulting results directory was
 
 ```{bash}
 $ du -h --max-depth 1
-2.8M	./multiqc
-29G	./kaiju
-72G	./metacache
-170G	./kraken2
-1.2T	./krakenuniq
-42G	./kmcp
-2.8G	./sylph
-51G	./ganon
-43M	./pipeline_info
-26G	./diamond
-199G	./bracken
-32G	./centrifuge
-1.8T	.
+2.8M	results/multiqc
+29G	results/kaiju
+72G	results/metacache
+170G	results/kraken2
+1.2T	results/krakenuniq
+42G	results/kmcp
+2.8G	results/sylph
+51G	results/ganon
+43M	results/pipeline_info
+26G	results/diamond
+199G	results/bracken
+32G	results/centrifuge
+1.8T	results/
 
 ```
 
@@ -146,3 +246,218 @@ nextflow run nf-core/createtaxdb -r 2.1.0 \
 
 -->
 
+```{bash}
+$ du -h --max-depth 1 results_20000/
+2.8M	results_20000/multiqc
+19G	results_20000/kaiju
+51G	results_20000/metacache
+124G	results_20000/kraken2
+814G	results_20000/krakenuniq
+28G	results_20000/kmcp
+1.9G	results_20000/sylph
+36G	results_20000/ganon
+5.2M	results_20000/pipeline_info
+18G	results_20000/diamond
+143G	results_20000/bracken
+22G	results_20000/centrifuge
+1.3T	results_20000/
+
+```
+
+### 10k
+
+
+<!--
+
+nextflow run nf-core/createtaxdb -r 2.1.0 \
+--input samplesheet_raven10000.csv \
+-profile mpcdf,raven \
+--outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/ \
+--dbname benchmark \
+--accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
+--prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
+--nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
+--nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
+--namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
+--genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
+--build_bracken \
+--build_centrifuge \
+--build_diamond \
+--build_ganon \
+--build_kaiju \
+--build_kmcp \
+--kmcp_compute_options=--by-seq \
+--build_kraken2 \
+--build_krakenuniq \
+--krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
+--build_sylph \
+--build_metacache \
+-w work/ \
+-c custom.config 
+-->
+
+```{bash}
+> du -h --max-depth 1 results_10000/
+2.8M	results_10000/multiqc
+9.5G	results_10000/kaiju
+28G	results_10000/metacache
+74G	results_10000/kraken2
+446G	results_10000/krakenuniq
+14G	results_10000/kmcp
+924M	results_10000/sylph
+19G	results_10000/ganon
+4.2M	results_10000/pipeline_info
+8.8G	results_10000/diamond
+83G	results_10000/bracken
+11G	results_10000/centrifuge
+691G	results_10000/
+```
+
+### 5k
+
+
+<!--
+
+nextflow run nf-core/createtaxdb -r 2.1.0 \
+--input samplesheet_raven5000.csv \
+-profile mpcdf,raven \
+--outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_5000/ \
+--dbname benchmark \
+--accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
+--prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
+--nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
+--nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
+--namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
+--genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
+--build_bracken \
+--build_centrifuge \
+--build_diamond \
+--build_ganon \
+--build_kaiju \
+--build_kmcp \
+--kmcp_compute_options=--by-seq \
+--build_kraken2 \
+--build_krakenuniq \
+--krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
+--build_sylph \
+--build_metacache \
+-w work/ \
+-c custom_small.config 
+-->
+
+```{bash}
+> du -h --max-depth 1 results_5000/
+2.8M	results_5000/multiqc
+4.6G	results_5000/kaiju
+15G	results_5000/metacache
+48G	results_5000/kraken2
+238G	results_5000/krakenuniq
+6.8G	results_5000/kmcp
+452M	results_5000/sylph
+9.5G	results_5000/ganon
+3.7M	results_5000/pipeline_info
+4.3G	results_5000/diamond
+51G	results_5000/bracken
+5.2G	results_5000/centrifuge
+381G	results_5000/
+
+
+```
+
+### 2k
+
+
+<!--
+
+nextflow run nf-core/createtaxdb -r 2.1.0 \
+--input samplesheet_raven2000.csv \
+-profile mpcdf,raven \
+--outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_2000/ \
+--dbname benchmark \
+--accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
+--prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
+--nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
+--nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
+--namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
+--genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
+--build_bracken \
+--build_centrifuge \
+--build_diamond \
+--build_ganon \
+--build_kaiju \
+--build_kmcp \
+--kmcp_compute_options=--by-seq \
+--build_kraken2 \
+--build_krakenuniq \
+--krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
+--build_sylph \
+--build_metacache \
+-w work/ \
+-c custom_small.config 
+-->
+
+```{bash}
+$ du -h --max-depth 1 results_2000/
+2.8M	results_2000/multiqc
+1.9G	results_2000/kaiju
+6.6G	results_2000/metacache
+32G	results_2000/kraken2
+109G	results_2000/krakenuniq
+2.8G	results_2000/kmcp
+190M	results_2000/sylph
+4.2G	results_2000/ganon
+3.5M	results_2000/pipeline_info
+1.9G	results_2000/diamond
+33G	results_2000/bracken
+2.2G	results_2000/centrifuge
+192G	results_2000/
+```
+
+### 1k
+
+<!--
+
+nextflow run nf-core/createtaxdb -r 2.1.0 \
+--input samplesheet_raven1000.csv \
+-profile mpcdf,raven \
+--outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_1000/ \
+--dbname benchmark \
+--accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
+--prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
+--nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
+--nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
+--namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
+--genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
+--build_bracken \
+--build_centrifuge \
+--build_diamond \
+--build_ganon \
+--build_kaiju \
+--build_kmcp \
+--kmcp_compute_options=--by-seq \
+--build_kraken2 \
+--build_krakenuniq \
+--krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
+--build_sylph \
+--build_metacache \
+-w work/ \
+-c custom_small.config 
+-->
+
+```{bash}
+$ du -h --max-depth 1 results_1000/
+2.8M	results_1000/multiqc
+927M	results_1000/kaiju
+3.5G	results_1000/metacache
+26G	results_1000/kraken2
+59G	results_1000/krakenuniq
+1.4G	results_1000/kmcp
+91M	results_1000/sylph
+2.3G	results_1000/ganon
+3.4M	results_1000/pipeline_info
+956M	results_1000/diamond
+26G	results_1000/bracken
+1.1G	results_1000/centrifuge
+120G	results_1000/
+
+```

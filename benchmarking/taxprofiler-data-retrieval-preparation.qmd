@@ -1,0 +1,55 @@
+---
+title: "Benchmarking nf-core/createtaxdb data retrieval and preparation"
+author: "James Fellows Yates"
+format: html
+---
+
+## Introduction
+
+This notebook describes to retrieve the data used for nf-core/createtaxdb benchmarking.
+
+For this benchmarking, we will perform two analyses on real datasets:
+
+- Tracking effects of sequencing depth on classification resource usage on a single database  (10.1016/j.cub.2021.09.031)
+- Resource usage of a short and long read datasets on a multiple databases (10.1038/s41564-022-01270-1) 
+
+## Requirements
+
+Command line tools used in this notebook includes:
+
+- `curl` (v8.5.0 (x86_64-pc-linux-gnu))
+- ncbi's `datasets`(18.19.0)
+
+All R based code blocks below required the following
+
+```{r}
+## No R packages used
+```
+
+A conda environment file is available, if you have pixi/mamba/conda installed:
+
+```{bash}
+#| eval: false
+conda env create -f environment.yaml 
+```
+
+:::{.callout-warning}
+Most code blocks are set to `eval: false` to prevent re-sampling of files, resulting
+in inconsistent results across runs.
+:::
+
+### Ancient DNA dataset 
+
+To test resource usage on different sequencing depths, we will use a sample from [Maixer 2022](https://doi.org/10.1038/s41564-022-01270-1), where an ancient palaeofaeces sequencing library was sequenced multiple times at different depths.
+
+```{bash}
+#| eval: false
+curl -o sequencing_reads/PRJEB44507.tsv "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJEB44507&result=read_run&fields=study_accession,sample_accession,secondary_sample_accession,experiment_accession,run_accession,tax_id,scientific_name,instrument_platform,instrument_model,library_name,nominal_length,library_layout,library_strategy,library_source,library_selection,read_count,fastq_bytes,fastq_md5,fastq_ftp,submitted_bytes,submitted_md5,submitted_ftp,submitted_aspera,submitted_format,sra_ftp,sample_alias,sample_title,bam_ftp&format=tsv&download=true&limit=0"
+grep -e "/2604" sequencing_reads/PRJEB44507.tsv > sequencing_reads/PRJEB44507_2604only.tsv
+
+## To Download
+for i in $(awk -F '\t' '{ print $19 }' sequencing_reads/PRJEB44507_2604only.tsv); do
+  echo curl $(echo $i | cut -d ';' -f 1) --remote-name --create-dirs --output-dir sequencing_reads
+  echo curl $(echo $i | cut -d ';' -f 2) --remote-name --create-dirs --output-dir sequencing_reads
+done
+```
