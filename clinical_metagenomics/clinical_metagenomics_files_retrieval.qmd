@@ -88,3 +88,4 @@ Then re-hydrate
 unzip ncbi_dataset.zip -d ncbi_genomes
 datasets rehydrate --directory ncbi_genomes
 ```
+
