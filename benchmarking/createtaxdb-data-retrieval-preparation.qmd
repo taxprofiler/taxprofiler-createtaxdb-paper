@@ -1,5 +1,5 @@
 ---
-title: "Benchmarking nf-core/createtaxdb data retrieval preparation"
+title: "Benchmarking nf-core/createtaxdb data retrieval and preparation"
 author: "James Fellows Yates"
 format: html
 ---
@@ -110,6 +110,11 @@ However, first as there are very few archaeal genomes, we will combine the two t
 
 ```{r}
 raw <- bind_rows(raw_arc, raw_bac, raw_vir)
+
+raw |> 
+  filter(`#assembly_accession` %in% bacarcvir$accession) |> 
+  as_tibble() |> 
+  write_tsv('assembly_summary_final.tsv')
 ```
 
 ### Filtering
@@ -210,6 +215,12 @@ complete_chromosome_only_sampled_species |>
   pull(`#assembly_accession`) |> 
   as_tibble() |> 
   write_tsv('bacarcvir_accessions.txt', col_names = FALSE)
+```
+
+To have all the information in assembly summary style
+
+```{r}
+bacarcvir <- read_tsv('bacarcvir_accessions.txt', col_names = c('accession'))
 ```
 
 We can then pass this to NCBI datasets

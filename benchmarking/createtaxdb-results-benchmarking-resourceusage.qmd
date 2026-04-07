@@ -1,0 +1,160 @@
+---
+title: "Benchmarking nf-core/createtaxdb resource usage"
+author: "James Fellows Yates"
+format: html
+---
+
+## Introduction
+
+This document summarises the resource usage of the nf-core/createtaxdb 'benchmarking' runs.
+
+It aims to give approximate guidance on the expected computing requirements for different sized input databases of a mixture of microbial genomes (bacterial, archaeal, viral), when constructing databases on default settings of each tool.
+
+We built databases using nf-core/createtaxdb with random samples of 1 thousand, 2 thousand, 5 thousand, 10 thousand, 20 thousand, and 29,807 complete reference genomes. 
+
+:::warning
+Note that these metrics do not provide any evaluation on the accuracy or suitability of the databases.
+:::
+
+Raw data was gathered through:
+
+- Nextflow's own resource reporting reports `pipeline_into/` in each results directory
+- `du results* --max-depth 1` command on the computing infrastructure, and cleaned up manually in a spreadsheet tool
+
+## Set up
+
+```{r}
+library(dplyr) ## general data processing
+library(readr) ## file reading/writing
+library(ggplot2) ## for plotting
+library(scales) ## for better memory unit plotting
+library(purrr) ## for mapping operations
+library(stringr) ## for string operations
+library(tidyr) ## for additional column operations
+library(patchwork) ## for plot joining
+sessionInfo()
+```
+
+## Disk space usage
+
+One major factor into the creation of metagenomic profiling databases is the size of the output files.
+In some cases these can be notoriously large, without parameter optimisation.
+
+Using the output of `du` on each of the results directories, we can plot the amount of hard drive space the output database directory generated from the pipeline (on default settings).
+
+First we can translate the Megabyte output from `du` to bytes (for later conversion to Gigabytes), and remove non-database output directories from the lists.
+
+<!--TODO, get size of input genomes? -->
+
+```{r}
+data_disk_raw <- read_tsv('resource_tracking/diskspaceusage_summary.tsv')
+
+data_disk_clean <- data_disk_raw |> 
+  mutate(
+      directory_size_bytes = directory_size * 1000 / 1000000000,
+      nr_genomes_round = nr_genomes / 1000
+    ) |> 
+  filter(!tool %in% c('TOTAL', 'pipeline_info', 'multiqc'))
+```
+
+
+
+```{r}
+palette_custom_tool = c(
+  "bracken" = "#a6cee3",
+  "centrifuge" = "#1f78b4",
+  "diamond" = "#ccebc5",
+  "ganon" = "#33a02c",
+  "kaiju" = "#fb9a99",
+  "kmcp" = "#e3211c",
+  "kraken2" = "#fdbf6f",      
+  "krakenuniq" = "#ff7f00",
+  "metacache" = "#cab2d6",
+  "sylph" = "#6a3d9a"
+)
+
+
+figure_disk_usage <- ggplot(data_disk_clean, aes(x = nr_genomes, y = directory_size_bytes, colour = tool, shape = tool)) +
+  geom_point() +
+  geom_line() +
+  scale_shape_manual(values = 1:10) +
+  scale_colour_manual(values = palette_custom_tool) +
+  ylab('Output database directory size (GB)') +
+  xlab('Number of genomes (thousands)') +
+  labs(
+    colour = 'Tool', 
+    shape = 'Tool'
+    ) +
+  theme_minimal()
+
+figure_disk_usage
+```
+
+## Compute resource usage
+
+Given the number of the input data, and the output data directed above, one can expect the amount of compute for each database building tool can be quite large.
+
+We can plot this using the Nextflow's own `pipeline_info` resource reports.
+
+```{r}
+## Load all trace files
+data_tracefiles_raw <- list.files('resource_tracking', full.names = TRUE, pattern = 'execution_trace_*.', recursive = TRUE) |> 
+  read_tsv(id = "file_name")
+
+## Clean up, including dropping duplicated rows due to cached tasks from `-resume`  runs, dropping non-building processes
+data_tracefiles_clean <- data_tracefiles_raw |> 
+  filter(status == 'COMPLETED', !str_detect(name, 'MULTIQC|.*PREPROCESSING.*')) |> 
+  rowwise() |> 
+  mutate(run = str_split(file_name, '/') |> unlist() |> pluck(2)) |> 
+  mutate(
+      n_genomes = as.numeric(str_remove(run, 'k')),
+      process = str_split(name, ':') |> unlist() |> pluck(-1) |> str_split(' ') |> unlist() |> pluck(1)
+    ) |>
+  arrange(n_genomes) |> 
+  select(n_genomes, run, process, peak_vmem) |> 
+  unique() |> 
+  separate(peak_vmem, c('peak_vmem_value', 'peak_vmem_unit'), sep = ' ') |> 
+  mutate(peak_vmem_value_gb = ifelse(peak_vmem_unit == 'MB', as.numeric(peak_vmem_value) / 1000, as.numeric(peak_vmem_value) ))
+```
+
+We can then plot the memory usage of each process, with each size of input datasets.
+
+```{r}
+palette_custom_process = c(
+  "BRACKEN_BUILD" = "#a6cee3",
+  "CENTRIFUGE_BUILD" = "#1f78b4",
+  "DIAMOND_MAKEDB" = "#ccebc5",
+  "GANON_BUILDCUSTOM" = "#33a02c",
+  "KAIJU_MKFMI" = "#fb9a99",
+  "KMCP_COMPUTE" = "#e3211c",
+  "KMCP_INDEX" = "#e3211c",
+  "KRAKEN2_ADD" = "#fdbf6f",
+  "KRAKEN2_BUILD" = "#fdbf6f",      
+  "KRAKENUNIQ_BUILD" = "#ff7f00",
+  "METACACHE_BUILD" = "#cab2d6",
+  "SYLPH_SKETCHGENOMES" = "#6a3d9a"
+)
+
+figure_memory_usage <- ggplot(data_tracefiles_clean, aes(x = n_genomes, y = peak_vmem_value_gb, color = process, shape = process)) +
+  geom_point() +
+  geom_line() +
+  scale_shape_manual(values = 1:16) +
+  scale_colour_manual(values = palette_custom_process) +
+  ylab('Peak virtual memory (GB)') +
+  xlab('Number of genomes (thousands)') +
+  labs(
+    colour = 'Tool Process', 
+    shape = 'Tool Process'
+    ) +
+  theme_minimal()
+
+figure_memory_usage
+```
+
+## Combined Plots
+
+```{r fig.width=10, fig.height=4}
+final_resource_figure <- figure_disk_usage + figure_memory_usage + plot_annotation(title = 'Metagenomic classifier database construction tool resource usage on default settings', tag_levels = 'A')
+
+ggsave('fig3.png', final_resource_figure, height = 4, width = 10, dpi = 300)
+```
