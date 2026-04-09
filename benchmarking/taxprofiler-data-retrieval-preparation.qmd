@@ -53,3 +53,19 @@ for i in $(awk -F '\t' '{ print $19 }' sequencing_reads/PRJEB44507_2604only.tsv)
   curl $(echo $i | cut -d ';' -f 2) --remote-name --create-dirs --output-dir sequencing_reads
 done
 ```
+
+Once downloaded, we can write create the samplesheet, which looks like this:
+
+```csv
+sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
+2604_sma,ERR5766165,ILLUMINA,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766165_1.fastq.gz,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766165_2.fastq.gz,
+2604_lar,ERR5766167,ILLUMINA,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766166_1.fastq.gz,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766166_2.fastq.gz,
+2604_med,ERR5766166,ILLUMINA,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766167_1.fastq.gz,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766167_2.fastq.gz,
+```
+
+Where each sample name corresponds to
+
+- `_sma` shallow sequencing depth library at 20 million reads
+- `_med` middle-sequencing depth at 100 million
+- `_large` deep sequencing depth at 200 million reads
+

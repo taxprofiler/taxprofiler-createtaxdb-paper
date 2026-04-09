@@ -1,0 +1,46 @@
+---
+title: "nf-core/createtaxdb database construction for clinical metagenomics case simulation"
+author: "Sofia Stamouli and James Fellows Yates"
+format: html
+---
+
+## Introduction
+
+<!-- TODO Sofia -->
+
+## Building centrifuge database
+
+```{bash}
+#| eval: false
+
+nextflow run nf-core/createtaxdb \
+-r 2.1.0 \
+--input samplesheet_denbi.csv \
+--outdir s3://sofia-genomes/results_centrifuge_metacache \
+-name benlangmead \
+--dbname benlangmead \
+--nodesdmp /vol/permanent/clinical_metagenomics/auxiliary-files/nodes.dmp \
+--namesdmp /vol/permanent/clinical_metagenomics/auxiliary-files/names.dmp \
+--nucl2taxid /vol/permanent/clinical_metagenomics/auxiliary-files/nucl2taxid.map \
+--build_centrifuge \
+--build_metacache \
+-c custom.conf
+```
+
+Where custom.conf containers
+
+```{groovy}
+#| eval: false
+process {
+  withName: 'CENTRIFUGE_BUILD' {
+    memory = '2047.GB'
+    cpus = '72'
+    time = '7.d'
+  }
+  withName: 'METACACHE_BUILD' {
+    memory = '240.GB'
+    cpus = '72'
+    time = '7.d'
+  }
+}
+```
