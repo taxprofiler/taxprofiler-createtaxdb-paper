@@ -89,3 +89,16 @@ unzip ncbi_dataset.zip -d ncbi_genomes
 datasets rehydrate --directory ncbi_genomes
 ```
 
+We will prepare the samplesheet to build kraken2 and diamond databases with nf-core/createtaxdb. The samplesheet will contain the assembly accessions, the corresponding taxids and the path to the genome files.
+
+We will start building the samplesheet by first mapping the taxids to the assembly accessions.
+
+```{bash}
+awk 'NR==FNR {ids[$1]; next} $1 in ids {print $1 "," $2}' assembly_accessions.txt records_assembly_accessions.txt > samplesheet.csv
+```
+After that we will run the bash script:
+
+```{bash}
+./samplesheet_build_kraken2.sh
+```
+
