@@ -16,7 +16,7 @@ Command line tools used in this notebook includes:
 
 ## Retrieving pipeline
 
-We will benchmarking with v2.1.0 of nf-core/createtaxdb
+We will benchmarking with v2.1.0 of nf-core/createtaxdb with Nextflow version 25.10.4.
 
 ```{bash}
 nextflow pull nf-core/createtaxdb -r 2.1.0
@@ -31,9 +31,7 @@ screen -R ctb
 ```
 
 ```{bash}
-##########################################################
-### TODO: try adding --kmcp_options '--by-seq' ################################################
-##########################################################
+
 nextflow run nf-core/createtaxdb -r 2.1.0 \
 --input samplesheet.csv \
 --outdir s3://createtaxdb-output/results/ \
@@ -50,6 +48,7 @@ nextflow run nf-core/createtaxdb -r 2.1.0 \
 --build_ganon \
 --build_kaiju \
 --build_kmcp \
+--kmcp_compute_options="--by-seq" \
 --build_kraken2 \
 --build_krakenuniq  \
 --krakenuniq_build_options "--jellyfish-bin \"\$(which jellyfish)\"" \
@@ -65,10 +64,11 @@ RAVEN
 
 nextflow run nf-core/createtaxdb \
  -r 2.1.0 \
- --input samplesheet_raven.csv \
+ --input samplesheet_raven30000.csv \
  -profile mpcdf,raven \
- --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results/ \
- --dbname benchmark \
+ -name benchmark_30000 \
+ --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_30000/ \
+ --dbname benchmark_30000 \
  --accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
  --prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
  --nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
@@ -81,15 +81,16 @@ nextflow run nf-core/createtaxdb \
  --build_ganon \
  --build_kaiju \
  --build_kmcp \
- --kmcp_compute_options="--by-seq"
+ --kmcp_compute_options="--by-seq" \
  --build_kraken2 \
  --build_krakenuniq \
  --krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
  --build_sylph \
  --build_metacache \
+ --generate_downstream_samplesheets \
+ --generate_pipeline_samplesheets taxprofiler \
  -w work/ \
- -resume \
- -c custom.config \
+ -c custom.config
 -->
 
 <!--
