@@ -153,6 +153,54 @@ To rename the files, run the script `rename_protein_files.sh`. This script will 
 
 Then, we will build the samplesheet for DIAMOND database building with the following command:
 
+```{bash}
+awk -F',' '
+BEGIN {
+    OFS=","
+    print "id,taxid,fasta_dna,fasta_aa"
+}
+NR>1 {
+    id=$1
+    taxid=$2
+    fna=$3
+
+    folder=fna
+    sub(/\/[^\/]+$/, "", folder)
+
+    faa=folder "/" id ".faa"
+
+    if (system("[ -f \"" faa "\" ]") == 0) {
+        print id, taxid, "", faa
+    } else {
+        print id, taxid, "", "NA"
+        print id >> "missing_faa.txt"
+    }
+}
+' samplesheet_kraken2.csv > samplesheet_diamond.csv
+```
+From the `samplesheet_diamond.csv` file, we will remove the NAs:
+
+```{bash}
+awk -F',' '$4 != "NA"' samplesheet_diamond.csv > samplesheet_diamond_tmp.csv
+mv samplesheet_diamond_tmp.csv samplesheet_diamond.csv
+```
+
+And to run nf-core/createtaxdb for DIAMOND:
+
+```{bash}
+#| eval: false
+nextflow run nf-core/createtaxdb \
+-r 2.1.0 \
+-profile singularity \
+--input samplesheet_diamond.csv \
+#-outdir results_diamond \
+--dbname benlangmead \
+--nodesdmp taxdmp/nodes.dmp \
+--namesdmp taxdmp/names.dmp \
+--prot2taxid prot.accession2taxid.gz \
+--build_diamond -c custom.config -resume
+```
+
 ## Building centrifuge database
 
 ```{bash}
