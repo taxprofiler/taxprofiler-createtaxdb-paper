@@ -22,6 +22,33 @@ conda install conda-forge::ncbi-datasets-cli
 
 ## Data retrieval
 
+### NCBI files
+Download the auxiliary taxonomy metadata files necessary to build the databases for the clinical metagenomics case study as also described in the nf-core/createtaxdb documentation.These files include:
+
+- `names.dmp` from [`pub/taxonomy`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/)
+- `nodes.dmp` from  from [`pub/taxonomy`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/)
+- `nucl_gb.accession2taxid.gz` from [`pub/taxonomy/accession2taxid`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/)
+- `prot.accession2taxid.gz` from [`pub/taxonomy/accession2taxid`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/)
+
+The commands are the same as described in benchmarking section.
+
+```{bash}
+#| eval: false
+
+## For nodes and names dmp files
+curl -o taxdump.tar.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+
+## for accession2taxid files
+curl -o nucl_gb.accession2taxid.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz
+curl -o prot.accession2taxid.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+
+gunzip *
+tar xvf taxdump.tar
+rm taxdmp.tar
+```
+
+### Genomes for the clinical metagenomics case study
+
 Download the list of genomes necessary to build the databases for the clinical metagenomics case study:
 
 ```{bash}
@@ -100,10 +127,31 @@ After that we will run the bash script:
 ./samplesheet_build_kraken2.sh
 ```
 
+With the samplesheet built, we will now build the kraken2 database
 ## Building Kraken2 database
+
+```{bash}
+#| eval: false
+
+nextflow run nf-core/createtaxdb \
+-r 2.1.0 \
+-profile singularity \
+--input samplesheet_kraken2.csv \
+--outdir results_kraken2 \
+--dbname benlangmead \
+--nodesdmp taxdmp/nodes.dmp \
+--namesdmp taxdmp/names.dmp \
+--accession2taxid nucl_gb.accession2taxid \
+--build_kraken2 --kraken2_keepintermediate -c custom.config -resume
+```
 
 ## Building DIAMOND database
 
+For building the DIAMOND database, we will use the *faa files downloaded with   ncbi-datasets-cli, which contain the protein sequences. We will first rename the files as they are all called `protein.faa`. Then, we will build the samplesheet for DIAMOND database building with the following command:
+
+To rename the files, run the script `rename_protein_files.sh`. This script will rename the files to `assembly_accession.faa` and will log any missing files in `missing_proteins.txt`.
+
+Then, we will build the samplesheet for DIAMOND database building with the following command:
 
 ## Building centrifuge database
 
