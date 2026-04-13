@@ -47,3 +47,8 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+sequencing_reads/
+auxiliary-files/
+ncbi_genomes*
+ncbi_dataset*
