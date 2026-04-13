@@ -47,14 +47,17 @@ First we can translate the Megabyte output from `du` to bytes (for later convers
 <!--TODO, get size of input genomes? -->
 
 ```{r}
-data_disk_raw <- read_tsv('resource_tracking/diskspaceusage_summary.tsv')
+data_disk_raw <- read_tsv('resource_tracking/resource_usage_raw.tsv', col_names = c('directory_size_bytes', 'directory'))
 
-data_disk_clean <- data_disk_raw |> 
+data_disk_clean <- data_disk_raw |>
+  separate(directory, into = c('genomes', 'tool'), sep = '/') |> 
   mutate(
-      directory_size_bytes = directory_size * 1000 / 1000000000,
-      nr_genomes_round = nr_genomes / 1000
+    nr_genomes = as.numeric(str_remove(genomes , 'results_')),
     ) |> 
-  filter(!tool %in% c('TOTAL', 'pipeline_info', 'multiqc'))
+  filter(
+    !tool %in% c('pipeline_info', 'multiqc', 'downstream_samplesheets'),
+    !is.na(tool)
+  )
 ```
 
 
@@ -107,7 +110,7 @@ data_tracefiles_clean <- data_tracefiles_raw |>
   rowwise() |> 
   mutate(run = str_split(file_name, '/') |> unlist() |> pluck(2)) |> 
   mutate(
-      n_genomes = as.numeric(str_remove(run, 'k')),
+      n_genomes = as.numeric(str_remove(run, 'results_')),
       process = str_split(name, ':') |> unlist() |> pluck(-1) |> str_split(' ') |> unlist() |> pluck(1)
     ) |>
   arrange(n_genomes) |> 
