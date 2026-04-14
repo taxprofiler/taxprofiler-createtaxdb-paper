@@ -8,8 +8,6 @@ format: html
 
 The notebook describes the set up of the execution of the nf-core/createtaxdb benchmarking run.
 
-sadsasda
-
 ## Requirements
 
 Command line tools used in this notebook includes:

@@ -87,44 +87,20 @@ Most of the databases were generated with nf-core/createtaxdb.
 Two tools however do not provide customisation, and pre-built provided databases must be used.
 
 ```{bash}
-#### TODO #########
+### motus
+conda create -n motus -c bioconda motus=3
+conda activate motus
+motus downloadDB
+conda deactivate
+
+find /u/jfellowsy/bin/miniconda3/envs/motus -name 'db_*' -type d ## Specific to my filesystem
+ln -s ~/bin/miniconda3/envs/motus/lib/python3.9/site-packages/motus/db_mOTU .  ## Specific to my filesystem
+
+### metaphlan
+conda deactivate
+conda create -n metaphlan=4.2.4 -c bioconda metaphlan= -y
+conda activate metaphlan
+metaphlan --install --db_dir metaphlan/
 ```
 
-## Execution
-
-We can then run nf-core/taxprofiler on this dataset of 3 differently depth-sequenced samples with the databases we generated previously.  
-
-For example, for the full dataset of just under ~30,000 genomes:
-
-```{bash}
-###################### TODO UPDATE WHEN CRAZY_CORGI RELEASED #############
-nextflow run nf-core/taxprofiler \
- -r dev \
- --input /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/taxprofiler_samplesheet.csv \
- --databases /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_30000/downstream_samplesheets/databases-taxprofiler.csv
- -profile mpcdf,raven \
- -name txp_benchmark_30000 \
- --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/results_30000/ \
- --perform_shortread_qc \
- --perform_shortread_complexityfilter \
- --perform_shortread_redundancyestimation \
- --perform_shortread_hostremoval \
- --shortrad_hostremoval_reference /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/human-t2t-hla.fa.gz \
- --hostremoval_index /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/ \
- --run_centrifuge \
- --run_diamond \
- --run_kaiju \
- --run_kraken2 \
- --run_krakenuniq \
- --run_bracken \
- --run_metaphlan \
- --run_motus \
- --run_kmcp \
- --run_ganon \
- --run_profile_standardisation \
- --run_krona \
- --taxpasta_taxonomy_dir
- --/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/ \
- 
-
-```
+/vol/permanent/clinical_metagenomics/samplesheet_denbi.csv
