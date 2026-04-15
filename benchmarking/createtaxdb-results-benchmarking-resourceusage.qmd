@@ -197,6 +197,7 @@ figure_memory_usage <- ggplot(data_tracefiles_clean, aes(x = n_genomes / 1000, y
 
 figure_memory_usage
 ```
+To see more detail of the bulk of the tools, we can scale the Y axis
 
 ```{r}
 figure_memory_usage_scaled <- ggplot(data_tracefiles_clean, aes(x = n_genomes / 1000, y = peak_vmem_value_gb, color = process, shape = process)) +
@@ -216,7 +217,26 @@ figure_memory_usage_scaled <- ggplot(data_tracefiles_clean, aes(x = n_genomes / 
 figure_memory_usage_scaled
 ```
 
-We can see that KrakenUniq and Centrifuge are particuraly problematic 
+
+Or produce a second plot removing the outliers
+
+
+```{r fig.width=10}
+figure_memory_usage_filtered <- ggplot(data_tracefiles_clean |> filter(!process %in% c('CENTRIFUGE_BUILD', 'KRAKENUNIQ_BUILD')), aes(x = n_genomes / 1000, y = peak_vmem_value_gb, color = process, shape = process)) +
+  geom_point(size = 2) +
+  geom_line() +
+  scale_shape_manual(values = 1:16) +
+  scale_colour_manual(values = palette_custom_process) +
+  ylab('Peak virtual memory (GB)') +
+  xlab('Number of genomes (thousands)') +
+  labs(
+    colour = 'Tool Process', 
+    shape = 'Tool Process'
+    ) +
+  theme_minimal()
+
+figure_memory_usage + figure_memory_usage_filtered + plot_annotation(tag_levels = 'A')
+```
 
 ## Combined Plots
 
