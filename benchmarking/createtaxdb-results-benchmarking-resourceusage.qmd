@@ -78,7 +78,7 @@ palette_custom_tool = c(
 
 
 figure_disk_usage <- ggplot(data_disk_clean, aes(x = nr_genomes, y = directory_size_bytes / 1024000, colour = tool, shape = tool)) +
-  geom_point() +
+  geom_point(size = 2) +
   geom_line() +
   scale_shape_manual(values = 1:10) +
   scale_colour_manual(values = palette_custom_tool) +
@@ -101,7 +101,7 @@ Filter out KrakenUniq in a second plot:
 
 ```{r}
 figure_disk_usage_filtered <- ggplot(data_disk_clean |> filter(tool != 'krakenuniq'), aes(x = nr_genomes, y = directory_size_bytes / 1024000, colour = tool, shape = tool)) +
-  geom_point() +
+  geom_point(size = 2) +
   geom_line() +
   scale_shape_manual(values = 1:10) +
   scale_colour_manual(values = palette_custom_tool) +
@@ -120,7 +120,7 @@ Or scale the axis:
 
 ```{r}
 figure_disk_usage_scaled <- ggplot(data_disk_clean, aes(x = nr_genomes / 1000, y = directory_size_bytes * 1000, colour = tool, shape = tool)) +
-  geom_point() +
+  geom_point(size = 2) +
   geom_line() +
   scale_shape_manual(values = 1:10) +
   scale_colour_manual(values = palette_custom_tool) +
@@ -183,7 +183,7 @@ palette_custom_process = c(
 )
 
 figure_memory_usage <- ggplot(data_tracefiles_clean, aes(x = n_genomes / 1000, y = peak_vmem_value_gb, color = process, shape = process)) +
-  geom_point() +
+  geom_point(size = 2) +
   geom_line() +
   scale_shape_manual(values = 1:16) +
   scale_colour_manual(values = palette_custom_process) +
@@ -199,13 +199,13 @@ figure_memory_usage
 ```
 
 ```{r}
-figure_memory_usage_scaled <- ggplot(data_tracefiles_clean, aes(x = n_genomes, y = peak_vmem_value_gb, color = process, shape = process)) +
-  geom_point() +
+figure_memory_usage_scaled <- ggplot(data_tracefiles_clean, aes(x = n_genomes / 1000, y = peak_vmem_value_gb, color = process, shape = process)) +
+  geom_point(size = 2) +
   geom_line() +
   scale_shape_manual(values = 1:16) +
   scale_colour_manual(values = palette_custom_process) +
-  scale_y_log10(guide = "axis_logticks", labels = label_bytes()) +
-  ylab('Peak virtual memory (GB)') +
+  scale_y_log10(guide = "axis_logticks", labels = label_bytes(scale = 1000000000)) +
+  ylab('Peak virtual memory (log10)') +
   xlab('Number of genomes (thousands)') +
   labs(
     colour = 'Tool Process', 
@@ -221,7 +221,9 @@ We can see that KrakenUniq and Centrifuge are particuraly problematic
 ## Combined Plots
 
 ```{r fig.width=10, fig.height=4}
-final_resource_figure <- figure_disk_usage_scaled + figure_memory_usage + plot_annotation(title = 'Metagenomic classifier database construction tool resource usage on default settings', tag_levels = 'A')
+final_resource_figure <- figure_memory_usage_scaled + figure_disk_usage_scaled + plot_annotation(title = 'Metagenomic classifier database construction tool compute resource usage on default settings', tag_levels = 'A')
+
+final_resource_figure
 
 ggsave('fig3.png', final_resource_figure, height = 4, width = 10, dpi = 300)
 ```
