@@ -127,6 +127,12 @@ After that we will run the bash script:
 ./samplesheet_build_kraken2.sh
 ```
 
+After the samplesheet is complete, there are som duplicate assembly accessions that can be removed with the following command:
+```{bash}
+awk -F',' '!seen[$1]++' samplesheet_kraken2.csv > samplesheet_kraken2_tmp.csv
+mv samplesheet_kraken2_tmp.csv samplesheet_kraken2.csv
+```
+
 With the samplesheet built, we will now build the kraken2 database
 ## Building Kraken2 database
 
