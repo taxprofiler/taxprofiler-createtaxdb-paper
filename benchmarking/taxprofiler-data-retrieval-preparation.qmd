@@ -18,7 +18,7 @@ For this benchmarking, we will perform two analyses on real datasets:
 Command line tools used in this notebook includes:
 
 - `curl` (v8.5.0 (x86_64-pc-linux-gnu))
-- ncbi's `datasets`(18.19.0)
+- hostile (v2.0.2)
 
 All R based code blocks below required the following
 
@@ -38,6 +38,17 @@ Most code blocks are set to `eval: false` to prevent re-sampling of files, resul
 in inconsistent results across runs.
 :::
 
+### Host removal genome
+
+As the samples are human palaeofaeces, and have been handled by human archaeologists and palaeogenomicsts, we will assume the human DNA will be some of the largest 'contaminants' in the sample.
+
+We will use the optimised reference telomere-to-telomere plus HLA sequences offered by the tool [`hostile`](https://github.com/bede/hostile).
+
+```{bash}
+export HOSTILE_CACHE_DIR=$(readlink -f reference/)
+hostile index fetch --name human-t2t-hla --bowtie2 --minimap2
+```
+
 ### Ancient DNA dataset 
 
 To test resource usage on different sequencing depths, we will use a sample from [Maixer 2022](https://doi.org/10.1038/s41564-022-01270-1), where an ancient palaeofaeces sequencing library was sequenced multiple times at different depths.
@@ -56,7 +67,7 @@ done
 
 Once downloaded, we can write create the samplesheet, which looks like this:
 
-```csv
+```{csv}
 sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
 2604_sma,ERR5766165,ILLUMINA,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766165_1.fastq.gz,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766165_2.fastq.gz,
 2604_lar,ERR5766167,ILLUMINA,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766166_1.fastq.gz,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766166_2.fastq.gz,
@@ -69,3 +80,27 @@ Where each sample name corresponds to
 - `_med` middle-sequencing depth at 100 million
 - `_large` deep sequencing depth at 200 million reads
 
+
+### Databases
+
+Most of the databases were generated with nf-core/createtaxdb.
+Two tools however do not provide customisation, and pre-built provided databases must be used.
+
+```{bash}
+### motus
+conda create -n motus -c bioconda motus=3
+conda activate motus
+motus downloadDB
+conda deactivate
+
+find /u/jfellowsy/bin/miniconda3/envs/motus -name 'db_*' -type d ## Specific to my filesystem
+ln -s ~/bin/miniconda3/envs/motus/lib/python3.9/site-packages/motus/db_mOTU .  ## Specific to my filesystem
+
+### metaphlan
+conda deactivate
+conda create -n metaphlan=4.2.4 -c bioconda metaphlan= -y
+conda activate metaphlan
+metaphlan --install --db_dir metaphlan/
+```
+
+/vol/permanent/clinical_metagenomics/samplesheet_denbi.csv
