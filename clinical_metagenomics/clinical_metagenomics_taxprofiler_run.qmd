@@ -9,7 +9,24 @@ format: html
 This notebook describes how the nf-core/taxprofiler run for the clinical metagenomics case study was performed. The clinical samples were analysed with nf-core/taxprofiler using the databases built with nf-core/createtaxdb as described in [clinical_metagenomics_database_construction.qmd](clinical_metagenomics_database_construction.qmd).
 
 
+### Sylph preprocessing steps
 
-### Sylph
+In order to run sylph on the clinical metagenomics case study, we need to incorporate the taxonomy into sylph's output. We will use `taxonkit` to retrieve the taxonomic lineage for each taxid in the sylph output and add it as a new column.
 
-In order to run sylph on the clinical metagenomics case study, we need to incorporate the taxonomy into sylph's output. We will use `taxonkit` to retrieve the taxonomic lineage for each taxid in the sylph output and add it as a new column. 
+```{bash}
+cut -d',' -f1,2 samplesheet_kraken2.csv > accession_taxid.txt
+cut -d',' -f2 samplesheet_kraken2.csv > taxids.txt
+
+#Assumed you have already downloaded the taxdmp files from NCBI and have them in a directory, you can use the following command to get the lineage for each taxid:
+
+taxonkit lineage taxids.txt --data-dir taxdmp/ | \
+taxonkit reformat -f "{d};{p};{c};{o};{f};{g};{s}" --data-dir taxdmp/ > lineage.txt
+
+#To get the sylph taxonomy format:
+paste -d'\t' <(cut -d',' -f1 samplesheet_kraken2.csv) <(cut -f2 lineage.txt) > sylph_taxonomy.tsv
+```
+
+For the short reads:
+
+
+For the long reads:
