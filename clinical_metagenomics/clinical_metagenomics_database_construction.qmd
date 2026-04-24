@@ -18,6 +18,7 @@ conda create -n createtaxdb_clinical_metagenomics
 conda activate createtaxdb_clinical_metagenomics
 conda install bioconda::entrez-direct
 conda install conda-forge::ncbi-datasets-cli
+conda install bioconda::taxonkit
 ```
 
 ## Data retrieval
@@ -28,7 +29,10 @@ Download the auxiliary taxonomy metadata files necessary to build the databases 
 - `names.dmp` from [`pub/taxonomy`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/)
 - `nodes.dmp` from  from [`pub/taxonomy`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/)
 - `nucl_gb.accession2taxid.gz` from [`pub/taxonomy/accession2taxid`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/)
+- `nucl_wgs.accession2taxid.gz` from [`pub/taxonomy/accession2taxid`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/)
 - `prot.accession2taxid.gz` from [`pub/taxonomy/accession2taxid`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/)
+
+We are going to use both `nucl_gb.accession2taxid.gz` and `nucl_wgs.accession2taxid.gz` so we are going to concatenate them into a single file `combined.accession2taxid.gz` to be used for building the Kraken2, sylph and MetaCache databases. The `prot.accession2taxid.gz` file will be used for building the DIAMOND database.
 
 The commands are the same as described in benchmarking section.
 
@@ -76,13 +80,15 @@ We will use the `esearch` tool from the Entrez Direct suite to retrieve the Asse
 sort -u records_without_univec.txt | \
 xargs -n 2000 sh -c '
     printf "%s\n" "$@" > tmp_batch.txt
+    echo "Processing batch: $(wc -l < tmp_batch.txt)" >&2
+
     epost -db nuccore -input tmp_batch.txt | \
     elink -target assembly | \
     esummary | \
     xtract -pattern DocumentSummary \
         -element AssemblyAccession,Taxid \
         -sep ","
-' sh > records_assembly_accessions.txt
+' sh > records_assembly_accessions.txt 2> batch_log.txt
 ```
 
 We will now need the first column of the `records_assembly_accession.txt` to download the corresponding references. The second column of the `records_assembly_accession.txt` will be used later when we will create the `samplesheet.csv`.
@@ -97,8 +103,12 @@ datasets download genome accession --inputfile assembly_accessions.txt --include
 ```
 
 ```{txt}
-Collecting 85,076 genome records [================================================] 100% 85076/85076
-{"resource_updated_on":"2026-04-02T15:03:00Z","record_count":85017,"estimated_file_size_mb":160820,"included_data_files":{"all_genomic_fasta":{"file_count":85029,"size_mb":105782.75},"prot_fasta":{"file_count":84828,"size_mb":55080.918}}}
+#Collecting 85,076 genome records [================================================] 100% #85076/85076
+#{"resource_updated_on":"2026-04-02T15:03:00Z","record_count":85017,#"estimated_file_size_mb":160820,"included_data_files":{"all_genomic_fasta":{"file_count":85029,"size_mb":105782.75},"prot_fasta":{"file_count":84828,"size_mb":55080.918}}}
+
+Collecting 81,700 genome records [================================================] 100% 81700/81700
+{"resource_updated_on":"2026-04-16T15:18:00Z","record_count":81656,"estimated_file_size_mb":156674,"included_data_files":{"all_genomic_fasta":{"file_count":81668,"size_mb":103242.9},"prot_fasta":{"file_count":81472,"size_mb":53476.203}}}
+
 ```
 
 To download we run without the same command but without `--preview` flag, but dehydrated - [as requested by NCBI](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/how-tos/genomes/large-download/), as we are downloading a large number of files
@@ -143,13 +153,18 @@ nextflow run nf-core/createtaxdb \
 -r 2.1.0 \
 -profile singularity \
 --input samplesheet_kraken2.csv \
---outdir results_kraken2 \
+--outdir results_kraken2_sylph_metacache \
 --dbname benlangmead \
 --nodesdmp taxdmp/nodes.dmp \
 --namesdmp taxdmp/names.dmp \
---accession2taxid nucl_gb.accession2taxid \
---build_kraken2 --kraken2_keepintermediate -c custom.config -resume
+--accession2taxid combined.accession2taxid.gz \
+--build_kraken2 --kraken2_keepintermediate \
+--build_sylph \
+--build_metacache \ 
+-c custom.config -resume
 ```
+
+
 
 ## Building DIAMOND database
 
@@ -207,39 +222,21 @@ nextflow run nf-core/createtaxdb \
 --build_diamond -c custom.config -resume
 ```
 
-## Building centrifuge database
-
-```{bash}
-#| eval: false
-
-nextflow run nf-core/createtaxdb \
--r 2.1.0 \
---input samplesheet_denbi.csv \
---outdir s3://sofia-genomes/results_centrifuge_metacache \
--name benlangmead \
---dbname benlangmead \
---nodesdmp /vol/permanent/clinical_metagenomics/auxiliary-files/nodes.dmp \
---namesdmp /vol/permanent/clinical_metagenomics/auxiliary-files/names.dmp \
---nucl2taxid /vol/permanent/clinical_metagenomics/auxiliary-files/nucl2taxid.map \
---build_centrifuge \
---build_metacache \
--c custom.conf
-```
 
 Where custom.conf containers
 
 ```{groovy}
 #| eval: false
 process {
-  withName: 'CENTRIFUGE_BUILD' {
-    memory = '2047.GB'
-    cpus = '72'
-    time = '7.d'
-  }
-  withName: 'METACACHE_BUILD' {
-    memory = '240.GB'
-    cpus = '72'
-    time = '7.d'
-  }
+    withName: 'CENTRIFUGE_BUILD' {
+        memory = '2047.GB'
+        cpus = '72'
+        time = '7.d'
+    }
+    withName: 'METACACHE_BUILD' {
+        memory = '240.GB'
+        cpus = '72'
+        time = '7.d'
+    }
 }
 ```
