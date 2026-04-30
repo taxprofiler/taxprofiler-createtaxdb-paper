@@ -14,15 +14,14 @@ format: html
 #| eval: false
 
 nextflow run nf-core/createtaxdb \
--r 2.1.0 \
+-r dev \
 --input samplesheet_denbi.csv \
 --outdir s3://sofia-genomes/results_centrifuge_metacache \
 -name benlangmead \
 --dbname benlangmead \
 --nodesdmp /vol/permanent/clinical_metagenomics/auxiliary-files/nodes.dmp \
 --namesdmp /vol/permanent/clinical_metagenomics/auxiliary-files/names.dmp \
---nucl2taxid /vol/permanent/clinical_metagenomics/auxiliary-files/nucl2taxid.map \
---build_centrifuge \
+--accession2taxid /vol/permanent/clinical_metagenomics/auxiliary-files/combined_unique.accession2taxid.gz \
 --build_metacache \
 -c custom.conf
 ```

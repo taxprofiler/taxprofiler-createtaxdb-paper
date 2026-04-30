@@ -52,3 +52,4 @@ sequencing_reads/
 auxiliary-files/
 ncbi_genomes*
 ncbi_dataset*
+.positai

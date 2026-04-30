@@ -21,6 +21,8 @@ Command line tools used in this notebook includes:
 - `gunzip` (gunzip (gzip) 1.10)
 - `tar` (tar (GNU tar) 1.34)
 - `awk` (GNU Awk 4.2.1, API: 2.0)
+- `taxonkit` (v0.2.0)
+- `csvtk` (v0.37.0)
 
 ## Download and prepare files
 
@@ -40,17 +42,18 @@ We can download (2026-03-17) these with:
 
 ```{bash}
 #| eval: false
+mkdir auxiliary_files/
 
 ## For nodes and names dmp files
-curl -o taxdump.tar.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+curl -o auxiliary_files/taxdump.tar.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
 
 ## for accession2taxid files
-curl -o nucl_gb.accession2taxid.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz
-curl -o prot.accession2taxid.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+curl -o auxiliary_files/nucl_gb.accession2taxid.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz
+curl -o auxiliary_files/prot.accession2taxid.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
  
 gunzip *
-tar xvf taxdump.tar
-rm taxdmp.tar
+tar xvf auxiliary_files/taxdump.tar
+rm auxiliary_files/taxdmp.tar
 ```
 
 ### NCBI genome.sizes
@@ -60,7 +63,7 @@ We can download the NCBI genome-sizes file:
 ```{bash}
 #| eval: false
 
-curl -o species_genome_size.txt https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/species_genome_size.txt
+curl -o auxiliary_files/species_genome_size.txt https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/species_genome_size.txt
 gzip species_genome_size.txt
 ```
 
@@ -71,7 +74,7 @@ To create a Kraken2 and co like `nucl2taxid` file, you can use the following `aw
 ```{bash}
 #| eval: false
 
-awk -v OFS='\t' 'NR>1 {print $2, $3}' nucl_gb.accession2taxid > nucl2taxid.map
+awk -v OFS='\t' 'NR>1 {print $2, $3}' auxiliary_files/nucl_gb.accession2taxid > auxiliary_files/nucl2taxid.map
 ```
 
 ### Create prot2taxid
@@ -81,7 +84,7 @@ To create a DIAMOND compatible `prot2taxid` file, you can use a similar `awk` co
 ```{bash}
 #| eval: false
 
-awk -v OFS='\t' '{print $2, $3}' prot.accession2taxid > prot2taxid.map
+awk -v OFS='\t' '{print $2, $3}' auxiliary_files/prot.accession2taxid > auxiliary_files/prot2taxid.map
 ```
 
 ### Download MALT db
@@ -91,6 +94,37 @@ To get the MALT taxonomy mappings, we download from the MEGAN website, and unzip
 ```{bash}
 #| eval: false
 
-curl -o megan-nucl-Feb2022.db.zip https://software-ab.cs.uni-tuebingen.de/download/megan6/megan-nucl-Feb2022.db.zip
+curl -o auxiliary_files/megan-nucl-Feb2022.db.zip https://software-ab.cs.uni-tuebingen.de/download/megan6/megan-nucl-Feb2022.db.zip
 ```
 
+::: {.callout-warning}
+At time of analysis, website was unavailable, so not excluded.
+:::
+
+### Sylph Taxonomy
+
+Sylph requires a custom taxonomy file that does not follow a typical NCBI `taxdmp` structure.
+
+:::{.callout-note}
+This is taxonomy file is currently supplied to nf-core/taxprofiler rather than nf-core/createtaxdb, as the file is used in a post-profiling conversion step.
+:::
+
+Instead, the`sylph` assigns to each _filename_ a character-based taxonomy string. 
+We will then need to generate this manually for nf-core/taxprofiler
+
+Fortunately a combination of `taxonkit` provides similar functionality for us to generate this from our existing samplesheet (see createtaxdb-data-retrieval-preparation.qmd) and NCBI taxonomy files we downloaded above.
+
+From within the benchmarking directory we can run:
+
+```{bash}
+cat samplesheets/createtaxdb-samplesheet_raven.csv | \
+  csvtk csv2tab | \
+  taxonkit --data-dir auxiliary_files/ reformat2 -I 2 -f "k__{domain|acellular root|superkingdom};p__{phylum};c__{class};o__{order};f__{family};g__{genus};s__{species}" | \
+  cut -f 2,5 | \
+  sed '1d;' > auxiliary-files/sylph_taxonomy.tsv
+```
+
+:::{.callout-note}
+Note that sylph-tax >= v1.7 uses a full file name instead of the first half of NCBI accessions.
+nf-core/taxprofiler currently only includes a pre-v1.7 version thus just uses the `GCF_` code.
+:::

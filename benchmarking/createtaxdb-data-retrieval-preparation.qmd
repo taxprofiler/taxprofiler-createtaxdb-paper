@@ -46,28 +46,29 @@ Download the relevant assembly summary files from the NCBI Genomes RefSeq databa
 ```{bash}
 #| eval: false
 ## assuming we are already in the benchmarking/ directory 
-curl -o assembly_summary_bacteria.tsv https://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
-curl -o assembly_summary_archaea.tsv https://ftp.ncbi.nlm.nih.gov/genomes/refseq/archaea/assembly_summary.txt
-curl -o assembly_summary_viral.tsv https://ftp.ncbi.nlm.nih.gov/genomes/refseq/viral/assembly_summary.txt
+mkdir assembly_info/
+curl -o assembly_info/assembly_summary_bacteria.tsv https://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
+curl -o assembly_info/assembly_summary_archaea.tsv https://ftp.ncbi.nlm.nih.gov/genomes/refseq/archaea/assembly_summary.txt
+curl -o assembly_info/assembly_summary_viral.tsv https://ftp.ncbi.nlm.nih.gov/genomes/refseq/viral/assembly_summary.txt
 
-gzip *tsv
+gzip assembly_info/*tsv
 ```
 
 We can then load these into R.
 We use `data.table`'s magic `fread` function to repair badly separated rows in the assembly summary files.
 
 ```{r}
-raw_bac <- data.table::fread('assembly_summary_bacteria.tsv.gz') |> 
+raw_bac <- data.table::fread('assembly_info/assembly_summary_bacteria.tsv.gz') |> 
   mutate(total_gene_count = as.integer(total_gene_count),
          protein_coding_gene_count = as.integer(protein_coding_gene_count),
          non_coding_gene_count = as.integer(non_coding_gene_count))
 
-raw_arc <- data.table::fread('assembly_summary_archaea.tsv.gz') |> 
+raw_arc <- data.table::fread('assembly_info/assembly_summary_archaea.tsv.gz') |> 
   mutate(total_gene_count = as.integer(total_gene_count),
          protein_coding_gene_count = as.integer(protein_coding_gene_count),
          non_coding_gene_count = as.integer(non_coding_gene_count))
 
-raw_vir <- data.table::fread('assembly_summary_viral.tsv.gz') |> 
+raw_vir <- data.table::fread('assembly_info/assembly_summary_viral.tsv.gz') |> 
   mutate(total_gene_count = as.integer(total_gene_count),
          protein_coding_gene_count = as.integer(protein_coding_gene_count),
          non_coding_gene_count = as.integer(non_coding_gene_count))
@@ -114,7 +115,7 @@ raw <- bind_rows(raw_arc, raw_bac, raw_vir)
 raw |> 
   filter(`#assembly_accession` %in% bacarcvir$accession) |> 
   as_tibble() |> 
-  write_tsv('assembly_summary_final.tsv')
+  write_tsv('assembly_info/assembly_summary_final.tsv')
 ```
 
 ### Filtering
@@ -214,20 +215,20 @@ First we need to make a file of just accessions.
 complete_chromosome_only_sampled_species |> 
   pull(`#assembly_accession`) |> 
   as_tibble() |> 
-  write_tsv('bacarcvir_accessions.txt', col_names = FALSE)
+  write_tsv('assembly_info/bacarcvir_accessions.txt', col_names = FALSE)
 ```
 
 To have all the information in assembly summary style
 
 ```{r}
-bacarcvir <- read_tsv('bacarcvir_accessions.txt', col_names = c('accession'))
+bacarcvir <- read_tsv('assembly_info/bacarcvir_accessions.txt', col_names = c('accession'))
 ```
 
 We can then pass this to NCBI datasets
 
 ```{bash}
 #| eval: false
-datasets download genome accession --inputfile bacarcvir_accessions.txt --include genome,protein --preview
+datasets download genome accession --inputfile assembly_info/bacarcvir_accessions.txt --include genome,protein --preview
 ```
 ```{txt}
 Collecting 29,971 genome records [------------------------------------------------]   0% 0/29971
@@ -278,7 +279,7 @@ Furthermore, not all genomes have `protein.faa` files available, therefore we fi
 #! eval: false
 
 for dir in ncbi_genomes/ncbi_dataset/data/*/; do
-  [ ! -f ${dir}protein.faa ] && echo "Protein file missing for: ${dir}protein.fa" >> missing_proteins.txt
+  [ ! -f ${dir}protein.faa ] && echo "Protein file missing for: ${dir}protein.fa" >> assembly_info/missing_proteins.txt
 done
 ```
 
@@ -288,7 +289,7 @@ Therefore for these genomes without a `protein.faa` file, we will remove the dir
 ```{bash}
 #! eval: false
 
-while read line; do rm -r $(dirname ${line##*: }); done <missing_proteins.txt
+while read line; do rm -r $(dirname ${line##*: }); done <assembly_info/missing_proteins.txt
 ```
 
 Then we need to repair the names of the re-used 'protein' name:
@@ -367,16 +368,16 @@ To get the final paths of downloaded genomes we can run these `find` commands.
 
 ```{bash}
 #|> eval: false
-find -type f -name '*fna' > final_genome_files_nucl.txt
-find -type f -name '*faa' > final_genome_files_prot.txt
+find -type f -name '*fna' > assembly_info/final_genome_files_nucl.txt
+find -type f -name '*faa' > assembly_info/final_genome_files_prot.txt
 ```
 
 Then we load these into R, combining together so that we have the accession as a unique key, then the two paths.
 
 ```{r}
-final_nucl_paths <- read_tsv('final_genome_files_nucl.txt', col_names = c('fasta_dna')) |> 
+final_nucl_paths <- read_tsv('assembly_info/final_genome_files_nucl.txt', col_names = c('fasta_dna')) |> 
   mutate(id = map(fasta_dna, ~str_split(.x, '/') |> unlist() |> pluck(5)) |> unlist())
-final_prot_paths <- read_tsv('final_genome_files_prot.txt', col_names = c('fasta_aa')) |> 
+final_prot_paths <- read_tsv('assembly_info/final_genome_files_prot.txt', col_names = c('fasta_aa')) |> 
   mutate(id = map(fasta_aa, ~str_split(.x, '/') |> unlist() |> pluck(5)) |> unlist())
 
 final_paths_all <- final_nucl_paths |> 
@@ -398,7 +399,7 @@ samplesheet <- final_paths_all |>
   left_join(taxids) |> 
   select(id, taxid, fasta_dna, fasta_aa)
 
-write_csv(samplesheet, 'samplesheet.csv')
+write_csv(samplesheet, 'samplesheets/createtaxdb-samplesheet.csv')
 ```
 
 ## Side analysis
@@ -406,7 +407,7 @@ write_csv(samplesheet, 'samplesheet.csv')
 Note we can also use a different join to find the missing genomes that didn't download.
 
 ```{r}
-original_accs <- read_tsv('bacarcvir_accessions.txt', col_names = 'id')
+original_accs <- read_tsv('assembly_info/bacarcvir_accessions.txt', col_names = 'id')
 original_accs |> anti_join(final_nucl_paths)
 ```
 
@@ -422,7 +423,7 @@ This is important as metagenomic database construction is a major issue.
 I will load the file-system specific modified samplesheet from above.
 
 ```{r}
-samplesheet_raven <- read_csv('samplesheet_raven.csv')
+samplesheet_raven <- read_csv('createtaxdb-samplesheet_raven.csv')
 ```
 
 This has 29,806 genomes.
@@ -437,6 +438,6 @@ I will randomly subset to the following number of genomes:
 
 ```{r}
 for(i in c(20000,10000,5000,2000,1000)){
-  samplesheet_raven |> sample_n(i) |> write_csv(paste0('samplesheet_raven', i, '.csv'))
+  samplesheet_raven |> sample_n(i) |> write_csv(paste0('createtaxdb-samplesheet_raven', i, '.csv'))
 }
 ```
