@@ -144,7 +144,10 @@ mv samplesheet_kraken2_tmp.csv samplesheet_kraken2.csv
 ```
 
 With the samplesheet built, we will now build the kraken2 database
+
 ## Building Kraken2 database
+
+At KI for kraken2 and sylph, and initally for metacache
 
 ```{bash}
 #| eval: false
@@ -164,7 +167,37 @@ nextflow run nf-core/createtaxdb \
 -c custom.config -resume
 ```
 
+on deNBI, for metcache
 
+```{bash}
+#| eval: false
+
+nextflow run nf-core/createtaxdb \
+-r dev \
+--input samplesheet_denbi.csv \
+--outdir s3://sofia-genomes/results_centrifuge_metacache \
+-name benlangmead \
+--dbname benlangmead \
+--nodesdmp /vol/permanent/clinical_metagenomics/auxiliary-files/nodes.dmp \
+--namesdmp /vol/permanent/clinical_metagenomics/auxiliary-files/names.dmp \
+--accession2taxid /vol/permanent/clinical_metagenomics/auxiliary-files/combined_unique.accession2taxid.gz \
+--build_metacache \
+-c custom.conf
+```
+
+```{bash}
+nextflow run nf-core/createtaxdb \
+-r dev \
+--input samplesheet_denbi.csv \
+--outdir s3://sofia-genomes/results_centrifuge_metacache \
+-name benlangmead \
+--dbname benlangmead \
+--nodesdmp /vol/permanent/clinical_metagenomics/auxiliary-files/nodes.dmp \
+--namesdmp /vol/permanent/clinical_metagenomics/auxiliary-files/names.dmp \
+--accession2taxid /vol/permanent/clinical_metagenomics/auxiliary-files/combined_unique.accession2taxid.gz \
+--build_metacache \
+-c custom.conf
+```
 
 ## Building DIAMOND database
 
