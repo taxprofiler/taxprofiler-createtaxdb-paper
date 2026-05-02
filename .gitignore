@@ -49,7 +49,11 @@ po/*~
 rsconnect/
 
 sequencing_reads/
+auxiliary_files/
 auxiliary-files/
 ncbi_genomes*
 ncbi_dataset*
 .positai
+.nextflow*
+nf-*tsv
+reference_genomes/
