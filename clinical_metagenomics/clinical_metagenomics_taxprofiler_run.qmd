@@ -1,0 +1,43 @@
+---
+title: "nf-core/taxprofiler run for clinical metagenomics case study"
+author: "Sofia Stamouli"
+format: html
+---
+
+## Introduction
+
+This notebook describes how the nf-core/taxprofiler run for the clinical metagenomics case study was performed. The clinical samples were analysed with nf-core/taxprofiler using the databases built with nf-core/createtaxdb as described in [clinical_metagenomics_database_construction.qmd](clinical_metagenomics_database_construction.qmd).
+
+
+### Sylph preprocessing steps
+
+In order to run sylph on the clinical metagenomics case study, we need to incorporate the taxonomy into sylph's output. We will use `taxonkit` to retrieve the taxonomic lineage for each taxid in the sylph output and add it as a new column.
+
+```{bash}
+cut -d',' -f1,2 samplesheet_kraken2.csv > accession_taxid.txt
+cut -d',' -f2 samplesheet_kraken2.csv > taxids.txt
+
+#Assumed you have already downloaded the taxdmp files from NCBI and have them in a directory, you can use the following command to get the lineage for each taxid:
+
+taxonkit lineage taxids.txt --data-dir taxdmp/ | \
+taxonkit reformat -f "{d};{p};{c};{o};{f};{g};{s}" --data-dir taxdmp/ > lineage.txt
+
+#To get the sylph taxonomy format:
+paste -d'\t' <(cut -d',' -f1 samplesheet_kraken2.csv) <(cut -f2 lineage.txt) > sylph_taxonomy.tsv
+```
+
+## nf-core/taxprofiler run
+```
+nextflow run nf-core/taxprofiler -r 2.0.0 -profile singularity --input samplesheet.csv --databases databases.csv --outdir taxprofiler_article_results --taxpasta_taxonomy_dir "path/to/taxdmp" --perform_shortread_qc --perform_shortread_complexityfilter --save_complexityfiltered_reads  --perform_longread_qc --perform_longread_hostremoval --save_complexityfiltered_reads --perform_shortread_hostremoval --hostremoval_reference "path/to/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna" --perform_runmerging --run_diamond --run_sylph  --sylph_taxonomy "path/to/sylph_taxonomy.tsv" --run_metacache --metacache_abundances --run_kraken2 --kraken2_save_reads --kraken2_save_readclassifications  --run_krona--run_profile_standardisation --taxpasta_add_lineage --taxpasta_add_name --taxpasta_add_rank -c taxprofiler_article.config -resume
+```
+
+The database.csv used for this run are:
+
+```
+tool,db_name,db_params,db_type,db_path
+metacache,metacache,-taxids -separate-cols -lowest species,long,/path/to/metacache
+diamond,diamond_long,--outfmt 102 --long-reads --block-size 6 --index-chunks 1,long,/path/to/benlangmead-diamond.dmnd
+sylph,sylph,-u --min-number-kmers 3 --minimum-ani 85,long,/path/to/benlangmead-sylph.syldb
+kraken2,k2_pluspf,,short;long,/path/to/benlangmead-kraken2
+diamond,diamond_short,--outfmt 102 --block-size 6 --index-chunks 1,short,/path/tobenlangmead-diamond.dmnd
+```
