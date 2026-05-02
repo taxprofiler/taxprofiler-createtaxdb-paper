@@ -1,0 +1,107 @@
+---
+title: "Benchmarking nf-core/taxprofiler pipeline execution"
+author: "James Fellows Yates"
+format: html
+---
+
+## Introduction
+
+The notebook describes the set up of the execution of the nf-core/taxprofiler benchmarking run.
+
+## Requirements
+
+Command line tools used in this notebook includes:
+
+  - `nextflow` (version 25.10.4 build 11173)
+
+## Retrieving pipeline
+
+We will benchmarking with v2.1.0 of nf-core/taxprofiler with Nextflow version 25.10.4.
+
+```{bash}
+#| eval: false
+
+## TO UPDATE ######################
+nextflow pull nf-core/taxprofiler -r 2.1.0
+```
+
+## Pipeline execution
+
+Make a fresh screen session for safety
+
+```{bash}
+#| eval: false
+screen -R txp
+```
+
+## Execution
+
+We can then run nf-core/taxprofiler on this dataset of 3 differently depth-sequenced samples with the databases we generated previously.  
+
+For example, for the full dataset of just under ~30,000 genomes:
+
+```{bash}
+###################### TODO UPDATE WHEN CRAZY_CORGI RELEASED #############
+nextflow run nf-core/taxprofiler \
+ -r dev \
+ --input /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/taxprofiler_samplesheet.csv \
+ --databases /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/databases-taxprofiler_30000.csv \
+ -profile mpcdf,raven \
+ -name txp_benchmark_30000 \
+ --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/results_30000/ \
+ --perform_shortread_qc \
+ --perform_shortread_complexityfilter \
+ --perform_shortread_redundancyestimation \
+ --perform_shortread_hostremoval \
+ --hostremoval_reference /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/human-t2t-hla.fa.gz \
+ --shortread_hostremoval_index /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/ \
+ --run_centrifuge \
+ --run_diamond \
+ --run_kaiju \
+ --run_kraken2 \
+ --run_krakenuniq \
+ --run_bracken \
+ --run_metaphlan \
+ --run_motus \
+ --run_kmcp \
+ --run_ganon \
+ --run_profile_standardisation \
+ --run_krona \
+ --taxpasta_taxonomy_dir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/
+```
+The final custom config (optimised for use on this particular infrastructure) on the two infrastructures used for testing was:
+
+```{groovy}
+process {
+        withName: 'KAIJU_KAIJU' {
+                memory = '100.GB'
+                cpus   = '18'
+        }
+        withName: 'GANON_CLASSIFY' {
+                memory = '72.GB'
+                cpus   = '18'
+        }
+        withName: 'KRAKEN2_KRAKEN2'{
+                memory = '240.GB'
+                cpus   = '72'
+        }
+        withName: 'BRACKEN_BRACKEN'{
+                memory = '240.GB'
+                cpus   = '72'
+        }
+        withName: 'METACACHE_QUERY' {
+                memory = '240.GB'
+                cpus = '72'
+        }
+        withName: 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ' {
+                memory = '2047.GB'
+                cpus = '72'
+                time = '24.h'
+        }
+        withName: 'CENTRIFUGE_CENTRIFUGE' {
+                memory = '2047.GB'
+                cpus = '72'
+        }
+}
+
+```

@@ -19,6 +19,7 @@ Command line tools used in this notebook includes:
 We will benchmarking with v2.1.0 of nf-core/createtaxdb with Nextflow version 25.10.4.
 
 ```{bash}
+#| eval: false
 nextflow pull nf-core/createtaxdb -r 2.1.0
 ```
 
@@ -27,41 +28,14 @@ nextflow pull nf-core/createtaxdb -r 2.1.0
 Make a fresh screen session for safety
 
 ```{bash}
+#| eval: false
 screen -R ctb
 ```
 
+Example command:
+
 ```{bash}
-
-nextflow run nf-core/createtaxdb -r 2.1.0 \
---input samplesheet.csv \
---outdir s3://createtaxdb-output/results/ \
---dbname benchmark \
---accession2taxid s3://createtaxdb-input/auxiliary-files/nucl_gb.accession2taxid \
---prot2taxid s3://createtaxdb-input/auxiliary-files/prot2taxid.map \
---nucl2taxid s3://createtaxdb-input/auxiliary-files/nucl2taxid.map \
---nodesdmp s3://createtaxdb-input/auxiliary-files/nodes.dmp \
---namesdmp s3://createtaxdb-input/auxiliary-files/names.dmp \
---genomesizes s3://createtaxdb-input/auxiliary-files/species_genome_size.txt.gz \
---build_bracken \
---build_centrifuge \
---build_diamond \
---build_ganon \
---build_kaiju \
---build_kmcp \
---kmcp_compute_options="--by-seq" \
---build_kraken2 \
---build_krakenuniq  \
---krakenuniq_build_options "--jellyfish-bin \"\$(which jellyfish)\"" \
---build_sylph \
---build_metacache \
--w work/ \
--c custom.config \
--resume
-```
-
-<!--
-RAVEN
-
+#| eval: false
 nextflow run nf-core/createtaxdb \
  -r 2.1.0 \
  --input samplesheet_raven30000.csv \
@@ -91,361 +65,419 @@ nextflow run nf-core/createtaxdb \
  --generate_pipeline_samplesheets taxprofiler \
  -w work/ \
  -c custom.config
--->
-
-<!--
-DENBI
-
-nextflow run nf-core/createtaxdb \
--r 2.1.0 \
---input samplesheet_denbi.csv \
--profile docker \
---outdir s3://createtaxdb-output/results_30k/ \
---dbname benchmark \
---accession2taxid /vol/permanent/benchmarking/createtaxdb/auxiliary-files/nucl_gb.accession2taxid \
---prot2taxid /vol/permanent/benchmarking/createtaxdb/auxiliary-files/prot2taxid.map \
---nucl2taxid /vol/permanent/benchmarking/createtaxdb/auxiliary-files/nucl2taxid.map \
---nodesdmp /vol/permanent/benchmarking/createtaxdb/auxiliary-files/nodes.dmp \
---namesdmp /vol/permanent/benchmarking/createtaxdb/auxiliary-files/names.dmp \
---genomesizes /vol/permanent/benchmarking/createtaxdb/auxiliary-files/species_genome_size.txt.gz \
---build_bracken \
---build_centrifuge \
---build_diamond \
---build_ganon \
---build_kaiju \
---build_kmcp \
---kmcp_compute_options="--by-seq" \
---build_kraken2 \
---build_krakenuniq \
---krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
---build_sylph \
---build_metacache \
--w work/ \
--resume \
--c custom_denbi.config \
--->
-
-The final custom config (optimised for use on the infrastructure) on the two infrastructures used for testing was:
-
-```{groovy}
-### RAVEN
-process {
-  withName: 'KRAKEN2_BUILD'{
-    memory = '240.GB'
-    cpus   = '72'
-  }
-  withName: 'BRACKEN_BUILD'{
-    memory = '240.GB'
-    cpus   = '72'
-  }
-  withName: 'METACACHE_BUILD' {
-    memory = '240.GB'
-    cpus = '72'	
-  }
-  withName: 'KRAKENUNIQ_BUILD' {
-    memory = '2047.GB'
-    cpus = '72'
-    time = '24.h'
-  }
-  withName: 'KMCP_COMPUTE' {
-    memory = '2047.GB'
-      cpus = '72'
-  }
-  withName: 'CENTRIFUGE_BUILD' {
-    memory = '2047.GB'
-    cpus = '72'
-  }
-}
-
-## DENBI
-process {
-  withName: 'METACACHE_BUILD' {
-    memory = '128.GB'
-    cpus   = 56
-  }
-
-  withName: 'KRAKEN2_ADD'{
-    memory = '128.GB'
-    cpus   = 56
-  }
-
-  withName: 'KRAKEN2_BUILD'{
-    memory = '128.GB'
-    cpus   = 56
-  }
-  withName: 'BRACKEN_BUILD'{
-    memory = '128.GB'
-    cpus   = 56
-  }
-  withName: 'KRAKENUNIQ_BUILD' {
-    memory = '900.GB'
-    cpus = 56
-  }
-  withName: 'CENTRIFUGE_BUILD' {
-    memory = '900.GB'
-    cpus = 56
-  }
-}
-
 ```
 
+The final custom config (optimised for use on this particular infrastructure) on the two infrastructures used for testing was:
+
+```{groovy}
+process {
+        withName: 'SEQKIT_BATCHRENAME' {
+                memory = '4.GB'
+                cpus = '4'
+        }
+        withName: 'FIND_CONCATENATE_AA' {
+                memory = '4.GB'
+                cpus = '4'
+        }
+        withName: 'FIND_CONCATENATE_AA_KAIJU' {
+                memory = '4.GB'
+                cpus = '4'
+        }
+        withName: 'FIND_CONCATENATE_AA_KAIJU' {
+                memory = '4.GB'
+                cpus = '4'
+        }
+        withName: 'KRAKEN2_ADD' {
+                memory = '4.GB'
+                cpus = '4'
+        }
+        withName: 'KMCP_COMPUTE' {
+                memory = '4.GB'
+                cpus = '4'
+        }
+        withName: 'SYLPH_SKETCHGENOMES' {
+                memory = '6.GB'
+                cpus = '8'
+        }
+        withName: 'DIAMOND_MAKEDB' {
+                memory = '12.GB'
+                cpus = '8'
+        }
+        withName: 'KMCP_INDEX' {
+                memory = '48.GB'
+                cpus = '24'
+        }
+        withName: 'KAIJU_MKFMI' {
+                memory = '100.GB'
+                cpus   = '18'
+        }
+        withName: 'GANON_BUILDCUSTOM' {
+                memory = '72.GB'
+                cpus   = '18'
+        }
+        withName: 'KRAKEN2_BUILD'{
+                memory = '240.GB'
+                cpus   = '72'
+        }
+        withName: 'BRACKEN_BUILD'{
+                memory = '240.GB'
+                cpus   = '72'
+        }
+        withName: 'METACACHE_BUILD' {
+                memory = '240.GB'
+                cpus = '72'
+        }
+        withName: 'KRAKENUNIQ_BUILD' {
+                memory = '2047.GB'
+                cpus = '72'
+                time = '24.h'
+        }
+        withName: 'CENTRIFUGE_BUILD' {
+                memory = '2047.GB'
+                cpus = '72'
+        }
+}
+```
 
 
 ## Harddrive usage
 
-The resulting results directory was
+The resulting results directory of each run was was
 
 ### 30k
 
-```{bash}
-$ du -h --max-depth 1
-2.8M	results/multiqc
-29G	results/kaiju
-72G	results/metacache
-170G	results/kraken2
-1.2T	results/krakenuniq
-42G	results/kmcp
-2.8G	results/sylph
-51G	results/ganon
-43M	results/pipeline_info
-26G	results/diamond
-199G	results/bracken
-32G	results/centrifuge
-1.8T	results/
+Command:
 
+```{bash}
+#| eval: false
+nextflow run nf-core/createtaxdb \
+ -r 2.1.0 \
+ --input samplesheet_raven20000.csv \
+ -profile mpcdf,raven \
+ -name benchmark_20000 \
+ --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_20000/ \
+ --dbname benchmark_20000 \
+ --accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
+ --prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
+ --nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
+ --nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
+ --namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
+ --genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
+ --build_bracken \
+ --build_centrifuge \
+ --build_diamond \
+ --build_ganon \
+ --build_kaiju \
+ --build_kmcp \
+ --kmcp_compute_options="--by-seq" \
+ --build_kraken2 \
+ --build_krakenuniq \
+ --krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
+ --build_sylph \
+ --build_metacache \
+ --generate_downstream_samplesheets \
+ --generate_pipeline_samplesheets taxprofiler \
+ -w work/ \
+ -c custom.config
+```
+
+Results directory:
+
+```{bash}
+#| eval: false
+$ du -h --max-depth 1 results_30000/
+2.8M    results_30000/multiqc
+1.5K    results_30000/downstream_samplesheets
+29G     results_30000/kaiju
+72G     results_30000/metacache
+170G    results_30000/kraken2
+1.2T    results_30000/krakenuniq
+28G     results_30000/kmcp
+2.8G    results_30000/sylph
+51G     results_30000/ganon
+6.1M    results_30000/pipeline_info
+26G     results_30000/diamond
+199G    results_30000/bracken
+32G     results_30000/centrifuge
+1.8T    results_30000/
 ```
 
 ### 20k
 
-<!--
-
-nextflow run nf-core/createtaxdb -r 2.1.0 \
---input samplesheet_raven20000.csv \
--profile mpcdf,raven \
---outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_20000/ \
---dbname benchmark \
---accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
---prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
---nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
---nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
---namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
---genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
---build_bracken \
---build_centrifuge \
---build_diamond \
---build_ganon \
---build_kaiju \
---build_kmcp \
---kmcp_compute_options=--by-seq \
---build_kraken2 \
---build_krakenuniq \
---krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
---build_sylph \
---build_metacache \
--w work/ \
--c custom.config 
-
--->
+Command:
 
 ```{bash}
-$ du -h --max-depth 1 results_20000/
-2.8M	results_20000/multiqc
-19G	results_20000/kaiju
-51G	results_20000/metacache
-124G	results_20000/kraken2
-814G	results_20000/krakenuniq
-28G	results_20000/kmcp
-1.9G	results_20000/sylph
-36G	results_20000/ganon
-5.2M	results_20000/pipeline_info
-18G	results_20000/diamond
-143G	results_20000/bracken
-22G	results_20000/centrifuge
-1.3T	results_20000/
+#| eval: false
+nextflow run nf-core/createtaxdb \
+ -r 2.1.0 \
+ --input samplesheet_raven20000.csv \
+ -profile mpcdf,raven \
+ -name benchmark_20000 \
+ --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_20000/ \
+ --dbname benchmark_20000 \
+ --accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
+ --prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
+ --nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
+ --nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
+ --namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
+ --genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
+ --build_bracken \
+ --build_centrifuge \
+ --build_diamond \
+ --build_ganon \
+ --build_kaiju \
+ --build_kmcp \
+ --kmcp_compute_options="--by-seq" \
+ --build_kraken2 \
+ --build_krakenuniq \
+ --krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
+ --build_sylph \
+ --build_metacache \
+ --generate_downstream_samplesheets \
+ --generate_pipeline_samplesheets taxprofiler \
+ -w work/ \
+ -c custom.config
+```
 
+Results directory:
+
+```{bash}
+#| eval: false
+$ du -h --max-depth 1 results_20000/
+2.8M    results_20000/multiqc
+1.5K    results_20000/downstream_samplesheets
+19G     results_20000/kaiju
+51G     results_20000/metacache
+124G    results_20000/kraken2
+814G    results_20000/krakenuniq
+19G     results_20000/kmcp
+1.9G    results_20000/sylph
+36G     results_20000/ganon
+5.2M    results_20000/pipeline_info
+18G     results_20000/diamond
+143G    results_20000/bracken
+22G     results_20000/centrifuge
+1.3T    results_20000/
 ```
 
 ### 10k
 
 
-<!--
-
-nextflow run nf-core/createtaxdb -r 2.1.0 \
---input samplesheet_raven10000.csv \
--profile mpcdf,raven \
---outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/ \
---dbname benchmark \
---accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
---prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
---nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
---nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
---namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
---genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
---build_bracken \
---build_centrifuge \
---build_diamond \
---build_ganon \
---build_kaiju \
---build_kmcp \
---kmcp_compute_options=--by-seq \
---build_kraken2 \
---build_krakenuniq \
---krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
---build_sylph \
---build_metacache \
--w work/ \
--c custom.config 
--->
+Command:
 
 ```{bash}
-> du -h --max-depth 1 results_10000/
-2.8M	results_10000/multiqc
-9.5G	results_10000/kaiju
-28G	results_10000/metacache
-74G	results_10000/kraken2
-446G	results_10000/krakenuniq
-14G	results_10000/kmcp
-924M	results_10000/sylph
-19G	results_10000/ganon
-4.2M	results_10000/pipeline_info
-8.8G	results_10000/diamond
-83G	results_10000/bracken
-11G	results_10000/centrifuge
-691G	results_10000/
+#| eval: false
+nextflow run nf-core/createtaxdb \
+ -r 2.1.0 \
+ --input samplesheet_raven10000.csv \
+ -profile mpcdf,raven \
+ -name benchmark_10000 \
+ --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/ \
+ --dbname benchmark_10000 \
+ --accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
+ --prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
+ --nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
+ --nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
+ --namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
+ --genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
+ --build_bracken \
+ --build_centrifuge \
+ --build_diamond \
+ --build_ganon \
+ --build_kaiju \
+ --build_kmcp \
+ --kmcp_compute_options="--by-seq" \
+ --build_kraken2 \
+ --build_krakenuniq \
+ --krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
+ --build_sylph \
+ --build_metacache \
+ --generate_downstream_samplesheets \
+ --generate_pipeline_samplesheets taxprofiler \
+ -w work/ \
+ -c custom.config
+```
+
+Results directory:
+
+```{bash}
+#| eval: false
+$ du -h --max-depth 1 results_10000/
+2.8M    results_10000/multiqc
+1.5K    results_10000/downstream_samplesheets
+9.5G    results_10000/kaiju
+28G     results_10000/metacache
+74G     results_10000/kraken2
+446G    results_10000/krakenuniq
+9.3G    results_10000/kmcp
+924M    results_10000/sylph
+19G     results_10000/ganon
+4.2M    results_10000/pipeline_info
+8.8G    results_10000/diamond
+83G     results_10000/bracken
+11G     results_10000/centrifuge
+686G    results_10000/
+
 ```
 
 ### 5k
 
-
-<!--
-
-nextflow run nf-core/createtaxdb -r 2.1.0 \
---input samplesheet_raven5000.csv \
--profile mpcdf,raven \
---outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_5000/ \
---dbname benchmark \
---accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
---prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
---nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
---nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
---namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
---genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
---build_bracken \
---build_centrifuge \
---build_diamond \
---build_ganon \
---build_kaiju \
---build_kmcp \
---kmcp_compute_options=--by-seq \
---build_kraken2 \
---build_krakenuniq \
---krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
---build_sylph \
---build_metacache \
--w work/ \
--c custom_small.config 
--->
+Command:
 
 ```{bash}
-> du -h --max-depth 1 results_5000/
-2.8M	results_5000/multiqc
-4.6G	results_5000/kaiju
-15G	results_5000/metacache
-48G	results_5000/kraken2
-238G	results_5000/krakenuniq
-6.8G	results_5000/kmcp
-452M	results_5000/sylph
-9.5G	results_5000/ganon
-3.7M	results_5000/pipeline_info
-4.3G	results_5000/diamond
-51G	results_5000/bracken
-5.2G	results_5000/centrifuge
-381G	results_5000/
+#| eval: false
+nextflow run nf-core/createtaxdb \
+ -r 2.1.0 \
+ --input samplesheet_raven5000.csv \
+ -profile mpcdf,raven \
+ -name benchmark_5000 \
+ --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_5000/ \
+ --dbname benchmark_5000 \
+ --accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
+ --prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
+ --nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
+ --nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
+ --namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
+ --genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
+ --build_bracken \
+ --build_centrifuge \
+ --build_diamond \
+ --build_ganon \
+ --build_kaiju \
+ --build_kmcp \
+ --kmcp_compute_options="--by-seq" \
+ --build_kraken2 \
+ --build_krakenuniq \
+ --krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
+ --build_sylph \
+ --build_metacache \
+ --generate_downstream_samplesheets \
+ --generate_pipeline_samplesheets taxprofiler \
+ -w work/ \
+ -c custom_small.config
+```
 
+Results directory:
 
+```{bash}
+#| eval: false
+$ du -h --max-depth 1 results_5000/
+2.8M    results_5000/multiqc
+1.5K    results_5000/downstream_samplesheets
+4.6G    results_5000/kaiju
+15G     results_5000/metacache
+48G     results_5000/kraken2
+238G    results_5000/krakenuniq
+6.8G    results_5000/kmcp
+452M    results_5000/sylph
+9.5G    results_5000/ganon
+3.7M    results_5000/pipeline_info
+4.3G    results_5000/diamond
+51G     results_5000/bracken
+5.2G    results_5000/centrifuge
+381G    results_5000/
 ```
 
 ### 2k
 
 
-<!--
-
-nextflow run nf-core/createtaxdb -r 2.1.0 \
---input samplesheet_raven2000.csv \
--profile mpcdf,raven \
---outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_2000/ \
---dbname benchmark \
---accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
---prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
---nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
---nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
---namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
---genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
---build_bracken \
---build_centrifuge \
---build_diamond \
---build_ganon \
---build_kaiju \
---build_kmcp \
---kmcp_compute_options=--by-seq \
---build_kraken2 \
---build_krakenuniq \
---krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
---build_sylph \
---build_metacache \
--w work/ \
--c custom_small.config 
--->
+Command:
 
 ```{bash}
+#| eval: false
+nextflow run nf-core/createtaxdb \
+ -r 2.1.0 \
+ --input samplesheet_raven2000.csv \
+ -profile mpcdf,raven \
+ -name benchmark_2000 \
+ --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_2000/ \
+ --dbname benchmark_2000 \
+ --accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
+ --prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
+ --nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
+ --nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
+ --namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
+ --genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
+ --build_bracken \
+ --build_centrifuge \
+ --build_diamond \
+ --build_ganon \
+ --build_kaiju \
+ --build_kmcp \
+ --kmcp_compute_options="--by-seq" \
+ --build_kraken2 \
+ --build_krakenuniq \
+ --krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
+ --build_sylph \
+ --build_metacache \
+ --generate_downstream_samplesheets \
+ --generate_pipeline_samplesheets taxprofiler \
+ -w work/ \
+ -c custom_small.config
+```
+
+Results directory:
+
+```{bash}
+#| eval: false
 $ du -h --max-depth 1 results_2000/
-2.8M	results_2000/multiqc
-1.9G	results_2000/kaiju
-6.6G	results_2000/metacache
-32G	results_2000/kraken2
-109G	results_2000/krakenuniq
-2.8G	results_2000/kmcp
-190M	results_2000/sylph
-4.2G	results_2000/ganon
-3.5M	results_2000/pipeline_info
-1.9G	results_2000/diamond
-33G	results_2000/bracken
-2.2G	results_2000/centrifuge
-192G	results_2000/
+2.8M    results_2000/multiqc
+1.5K    results_2000/downstream_samplesheets
+1.9G    results_2000/kaiju
+6.6G    results_2000/metacache
+32G     results_2000/kraken2
+109G    results_2000/krakenuniq
+2.8G    results_2000/kmcp
+190M    results_2000/sylph
+4.2G    results_2000/ganon
+3.5M    results_2000/pipeline_info
+1.9G    results_2000/diamond
+33G     results_2000/bracken
+2.2G    results_2000/centrifuge
+192G    results_2000/
 ```
 
 ### 1k
 
-<!--
-
-nextflow run nf-core/createtaxdb -r 2.1.0 \
---input samplesheet_raven1000.csv \
--profile mpcdf,raven \
---outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_1000/ \
---dbname benchmark \
---accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
---prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
---nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
---nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
---namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
---genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
---build_bracken \
---build_centrifuge \
---build_diamond \
---build_ganon \
---build_kaiju \
---build_kmcp \
---kmcp_compute_options=--by-seq \
---build_kraken2 \
---build_krakenuniq \
---krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
---build_sylph \
---build_metacache \
--w work/ \
--c custom_small.config 
--->
+Command:
 
 ```{bash}
+#| eval: false
+nextflow run nf-core/createtaxdb \
+ -r 2.1.0 \
+ --input samplesheet_raven1000.csv \
+ -profile mpcdf,raven \
+ -name benchmark_1000 \
+ --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_1000/ \
+ --dbname benchmark_1000 \
+ --accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl_gb.accession2taxid \
+ --prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/prot2taxid.map \
+ --nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nucl2taxid.map \
+ --nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/nodes.dmp \
+ --namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/names.dmp \
+ --genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary-files/species_genome_size.txt.gz \
+ --build_bracken \
+ --build_centrifuge \
+ --build_diamond \
+ --build_ganon \
+ --build_kaiju \
+ --build_kmcp \
+ --kmcp_compute_options="--by-seq" \
+ --build_kraken2 \
+ --build_krakenuniq \
+ --krakenuniq_build_options '--jellyfish-bin "$(which jellyfish)"' \
+ --build_sylph \
+ --build_metacache \
+ --generate_downstream_samplesheets \
+ --generate_pipeline_samplesheets taxprofiler \
+ -w work/ \
+ -c custom_small.config
+```
+
+Results directory:
+
+```{bash}
+#| eval: false
 $ du -h --max-depth 1 results_1000/
 2.8M	results_1000/multiqc
 927M	results_1000/kaiju
@@ -460,5 +492,14 @@ $ du -h --max-depth 1 results_1000/
 26G	results_1000/bracken
 1.1G	results_1000/centrifuge
 120G	results_1000/
+```
 
+### Aggregation
+
+To aggregate all the results directory `du` commands all into one file, we can use the following:
+
+```{bash}
+#| eval: false
+for i in results_*; do du --max-depth 1 $i >> resource_usage_raw.tsv; done
+for i in results_*; do du -h --max-depth 1 $i >> resource_usage_humanreadable.tsv; done
 ```

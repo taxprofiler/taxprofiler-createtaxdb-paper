@@ -6,41 +6,237 @@ format: html
 
 ## Introduction
 
-<!-- TODO Sofia -->
+This notebook describes how the genomes for testing nf-core/createtaxdb in the clinical metagenomics case study were
+selected.The genomes used for presenting the application of nf-core/taxprofiler in the clinical metagenomics case study were retrieved from https://benlangmead.github.io/aws-indexes/k2 using PlusPF (2/26/2026). The genomes were used to build DIAMOND,MetaCache and sylph databases with nf-core/createtaxdb. To ensure consistency in the analysis,we also built a Kraken2 database using nf-core/createtaxdb, even though a prebuilt database is available from the same source.
 
-## Building centrifuge database
+The clinical samples were further analysed with nf-core/taxprofiler.
+
+Before starting any data retrieval, make sure to have the necessary tools installed.
+
+```{bash}
+conda create -n createtaxdb_clinical_metagenomics
+conda activate createtaxdb_clinical_metagenomics
+conda install bioconda::entrez-direct
+conda install conda-forge::ncbi-datasets-cli
+conda install bioconda::taxonkit
+```
+
+## Data retrieval
+
+### NCBI files
+Download the auxiliary taxonomy metadata files necessary to build the databases for the clinical metagenomics case study as also described in the nf-core/createtaxdb documentation.These files include:
+
+- `names.dmp` from [`pub/taxonomy`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/)
+- `nodes.dmp` from  from [`pub/taxonomy`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/)
+- `nucl_gb.accession2taxid.gz` from [`pub/taxonomy/accession2taxid`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/)
+- `nucl_wgs.accession2taxid.gz` from [`pub/taxonomy/accession2taxid`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/)
+- `prot.accession2taxid.gz` from [`pub/taxonomy/accession2taxid`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/)
+
+We are going to use both `nucl_gb.accession2taxid.gz` and `nucl_wgs.accession2taxid.gz` so we are going to concatenate them into a single file `combined.accession2taxid.gz` to be used for building the Kraken2, sylph and MetaCache databases. The `prot.accession2taxid.gz` file will be used for building the DIAMOND database.
+
+The commands are the same as described in benchmarking section.
+
+```{bash}
+#| eval: false
+
+## For nodes and names dmp files
+curl -o taxdump.tar.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+
+## for accession2taxid files
+curl -o nucl_gb.accession2taxid.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz
+curl -o prot.accession2taxid.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+
+gunzip *
+tar xvf taxdump.tar
+rm taxdmp.tar
+```
+
+### Genomes for the clinical metagenomics case study
+
+Download the list of genomes necessary to build the databases for the clinical metagenomics case study:
+
+```{bash}
+wget https://genome-idx.s3.amazonaws.com/kraken/pluspf_20260226/library_report.tsv
+```
+
+The format of this file is as follows:
+
+| Library  | Sequence Name                                                                 | URL                                                                                           |
+|----------|-------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| plasmid  | NZ_CM002625.1 Xanthomonas campestris pv. campestris str. CFBP 12824 plasmid unnamed3, whole genome shotgun sequence | genomes/refseq/plasmid/plasmid.5.1.genomic.fna.gz |
+| bacteria | NZ_CABWXX010000283.1 Salmonella enterica subsp. enterica serovar Derby isolate ER1175, whole genome shotgun sequence | https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/902/509/465/GCF_902509465.1_assembly/GCF_902509465.1_assembly_genomic.fna.gz |
+
+We will convert the RefSeq records in `library_report.tsv` to Assembly accessions. The file contains a list of NZ_* sequence accessions that we will map to their corresponding GCF_/GCA_ Assembly accessions.
+
+`cut -f2 library_report.tsv | awk 'NF {print $1}' | tail -n +2 > records.txt`
+
+In the file, we have 3155 records of UniVec_Core, we will remove them from the file `records.txt` and we will download them separately.
+
+`grep -v 'gnl|uv|' records.txt > records_without_univec.txt`
+
+We will use the `esearch` tool from the Entrez Direct suite to retrieve the Assembly accessions corresponding to the sequence accessions in `records_without_univec.txt`. The output will be saved in `records_assembly_accessions.txt`.
+
+```{bash}
+sort -u records_without_univec.txt | \
+xargs -n 2000 sh -c '
+    printf "%s\n" "$@" > tmp_batch.txt
+    echo "Processing batch: $(wc -l < tmp_batch.txt)" >&2
+
+    epost -db nuccore -input tmp_batch.txt | \
+    elink -target assembly | \
+    esummary | \
+    xtract -pattern DocumentSummary \
+        -element AssemblyAccession,Taxid \
+        -sep ","
+' sh > records_assembly_accessions.txt 2> batch_log.txt
+```
+
+We will now need the first column of the `records_assembly_accession.txt` to download the corresponding references. The second column of the `records_assembly_accession.txt` will be used later when we will create the `samplesheet.csv`.
+
+```{bash}
+cut -f1 records_assembly_accessions.txt > assembly_accessions.txt
+```
+We will use the ncbi-datasets-cli:
+
+```{bash}
+datasets download genome accession --inputfile assembly_accessions.txt --include genome,protein --preview
+```
+
+```{txt}
+#Collecting 85,076 genome records [================================================] 100% #85076/85076
+#{"resource_updated_on":"2026-04-02T15:03:00Z","record_count":85017,#"estimated_file_size_mb":160820,"included_data_files":{"all_genomic_fasta":{"file_count":85029,"size_mb":105782.75},"prot_fasta":{"file_count":84828,"size_mb":55080.918}}}
+
+Collecting 81,700 genome records [================================================] 100% 81700/81700
+{"resource_updated_on":"2026-04-16T15:18:00Z","record_count":81656,"estimated_file_size_mb":156674,"included_data_files":{"all_genomic_fasta":{"file_count":81668,"size_mb":103242.9},"prot_fasta":{"file_count":81472,"size_mb":53476.203}}}
+
+```
+
+To download we run without the same command but without `--preview` flag, but dehydrated - [as requested by NCBI](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/how-tos/genomes/large-download/), as we are downloading a large number of files
+
+```{bash}
+datasets download genome accession --inputfile assembly_accessions.txt --include genome,protein --dehydrated
+```
+
+Then re-hydrate
+
+```{bash}
+unzip ncbi_dataset.zip -d ncbi_genomes
+datasets rehydrate --directory ncbi_genomes
+```
+
+We will prepare the samplesheet to build kraken2 and diamond databases with nf-core/createtaxdb. The samplesheet will contain the assembly accessions, the corresponding taxids and the path to the genome files.
+
+We will start building the samplesheet by first mapping the taxids to the assembly accessions.
+
+```{bash}
+awk 'NR==FNR {ids[$1]; next} $1 in ids {print $1 "," $2}' assembly_accessions.txt records_assembly_accessions.txt > samplesheet.csv
+```
+After that we will run the bash script:
+
+```{bash}
+./samplesheet_build_kraken2.sh
+```
+
+After the samplesheet is complete, there are som duplicate assembly accessions that can be removed with the following command:
+```{bash}
+awk -F',' '!seen[$1]++' samplesheet_kraken2.csv > samplesheet_kraken2_tmp.csv
+mv samplesheet_kraken2_tmp.csv samplesheet_kraken2.csv
+```
+
+With the samplesheet built, we will now build the kraken2 database
+## Building Kraken2 database
 
 ```{bash}
 #| eval: false
 
 nextflow run nf-core/createtaxdb \
 -r 2.1.0 \
---input samplesheet_denbi.csv \
---outdir s3://sofia-genomes/results_centrifuge_metacache \
--name benlangmead \
+-profile singularity \
+--input samplesheet_kraken2.csv \
+--outdir results_kraken2_sylph_metacache \
 --dbname benlangmead \
---nodesdmp /vol/permanent/clinical_metagenomics/auxiliary-files/nodes.dmp \
---namesdmp /vol/permanent/clinical_metagenomics/auxiliary-files/names.dmp \
---nucl2taxid /vol/permanent/clinical_metagenomics/auxiliary-files/nucl2taxid.map \
---build_centrifuge \
---build_metacache \
--c custom.conf
+--nodesdmp taxdmp/nodes.dmp \
+--namesdmp taxdmp/names.dmp \
+--accession2taxid combined.accession2taxid.gz \
+--build_kraken2 --kraken2_keepintermediate \
+--build_sylph \
+--build_metacache \ 
+-c custom.config -resume
 ```
+
+
+
+## Building DIAMOND database
+
+For building the DIAMOND database, we will use the *faa files downloaded with   ncbi-datasets-cli, which contain the protein sequences. We will first rename the files as they are all called `protein.faa`. Then, we will build the samplesheet for DIAMOND database building with the following command:
+
+To rename the files, run the script `rename_protein_files.sh`. This script will rename the files to `assembly_accession.faa` and will log any missing files in `missing_proteins.txt`.
+
+Then, we will build the samplesheet for DIAMOND database building with the following command:
+
+```{bash}
+awk -F',' '
+BEGIN {
+    OFS=","
+    print "id,taxid,fasta_dna,fasta_aa"
+}
+NR>1 {
+    id=$1
+    taxid=$2
+    fna=$3
+
+    folder=fna
+    sub(/\/[^\/]+$/, "", folder)
+
+    faa=folder "/" id ".faa"
+
+    if (system("[ -f \"" faa "\" ]") == 0) {
+        print id, taxid, "", faa
+    } else {
+        print id, taxid, "", "NA"
+        print id >> "missing_faa.txt"
+    }
+}
+' samplesheet_kraken2.csv > samplesheet_diamond.csv
+```
+From the `samplesheet_diamond.csv` file, we will remove the NAs:
+
+```{bash}
+awk -F',' '$4 != "NA"' samplesheet_diamond.csv > samplesheet_diamond_tmp.csv
+mv samplesheet_diamond_tmp.csv samplesheet_diamond.csv
+```
+
+And to run nf-core/createtaxdb for DIAMOND:
+
+```{bash}
+#| eval: false
+nextflow run nf-core/createtaxdb \
+-r 2.1.0 \
+-profile singularity \
+--input samplesheet_diamond.csv \
+#-outdir results_diamond \
+--dbname benlangmead \
+--nodesdmp taxdmp/nodes.dmp \
+--namesdmp taxdmp/names.dmp \
+--prot2taxid prot.accession2taxid.gz \
+--build_diamond -c custom.config -resume
+```
+
 
 Where custom.conf containers
 
 ```{groovy}
 #| eval: false
 process {
-  withName: 'CENTRIFUGE_BUILD' {
-    memory = '2047.GB'
-    cpus = '72'
-    time = '7.d'
-  }
-  withName: 'METACACHE_BUILD' {
-    memory = '240.GB'
-    cpus = '72'
-    time = '7.d'
-  }
+    withName: 'CENTRIFUGE_BUILD' {
+        memory = '2047.GB'
+        cpus = '72'
+        time = '7.d'
+    }
+    withName: 'METACACHE_BUILD' {
+        memory = '240.GB'
+        cpus = '72'
+        time = '7.d'
+    }
 }
 ```
