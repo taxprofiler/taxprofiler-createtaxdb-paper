@@ -1,0 +1,264 @@
+<!--
+  ~ Copyright 2013-2024, Seqera Labs
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<html>
+<head>
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+</head>
+<body>
+<pre class="mermaid" style="text-align: center;">
+%%{
+  init: {
+    'theme': 'base',
+    'themeVariables': {
+      'primaryColor': '#B6ECE2',
+      'primaryTextColor': '#160F26',
+      'primaryBorderColor': '#065647',
+      'lineColor': '#545555',
+      'clusterBkg': '#BABCBD22',
+      'clusterBorder': '#DDDEDE',
+      'fontFamily': 'arial'
+    }
+  }
+}%%
+flowchart TB
+    subgraph " "
+    v2["Channel.fromList"]
+    v87["conversion_table"]
+    v88["taxonomy_tree"]
+    v89["name_table"]
+    v90["size_table"]
+    v93["taxonmap"]
+    v94["taxonnodes"]
+    v95["taxonnames"]
+    v102["Channel.fromPath"]
+    v103["Channel.fromPath"]
+    v106["genome_size_files"]
+    v110["nodes_dmp"]
+    v111["names_dmp"]
+    v112["keep_intermediate"]
+    v117["taxonomy_names"]
+    v118["taxonomy_nodes"]
+    v119["accession2taxid"]
+    v120["seqid2taxid"]
+    v124["cleaning"]
+    v132["Channel.of"]
+    v133["Channel.of"]
+    v136["Channel.of"]
+    v140["keep_intermediate"]
+    v150[" "]
+    v158["taxonomy"]
+    v159["seq2taxid"]
+    v188[" "]
+    v198["Channel.of"]
+    v203[" "]
+    v206[" "]
+    end
+    subgraph " "
+    v7[" "]
+    v12[" "]
+    v108[" "]
+    v114[" "]
+    v115[" "]
+    v116[" "]
+    v122[" "]
+    v126[" "]
+    v127[" "]
+    v128[" "]
+    v130[" "]
+    v131["db_separated"]
+    v137[" "]
+    v142[" "]
+    v147[" "]
+    v148[" "]
+    v152[" "]
+    v153[" "]
+    v161[" "]
+    v185["samplesheet"]
+    v213[" "]
+    v214[" "]
+    v215[" "]
+    v219[" "]
+    end
+    subgraph "NFCORE_CREATETAXDB [NFCORE_CREATETAXDB]"
+    subgraph "NFCORE_CREATETAXDB:CREATETAXDB [CREATETAXDB]"
+    subgraph "NFCORE_CREATETAXDB:CREATETAXDB:PREPROCESSING [PREPROCESSING]"
+    v39(["UNPIGZ_DNA"])
+    v49(["FIND_CONCATENATE_DNA"])
+    v59(["UNPIGZ_AA"])
+    v69(["FIND_CONCATENATE_AA"])
+    v76(["SEQKIT_BATCHRENAME"])
+    v82(["FIND_CONCATENATE_AA_KAIJU"])
+    v31(( ))
+    v40(( ))
+    v51(( ))
+    v79(( ))
+    end
+    v91(["CENTRIFUGE_BUILD"])
+    v96(["DIAMOND_MAKEDB"])
+    v107(["GANON_BUILDCUSTOM"])
+    v113(["KAIJU_MKFMI"])
+    subgraph "NFCORE_CREATETAXDB:CREATETAXDB:FASTA_BUILD_ADD_KRAKEN2_BRACKEN [FASTA_BUILD_ADD_KRAKEN2_BRACKEN]"
+    v121(["KRAKEN2_ADD"])
+    v125(["KRAKEN2_BUILD"])
+    v129(["BRACKEN_BUILD"])
+    v123(( ))
+    end
+    v141(["KRAKENUNIQ_BUILD"])
+    subgraph "NFCORE_CREATETAXDB:CREATETAXDB:KMCP_CREATE [KMCP_CREATE]"
+    v146(["KMCP_COMPUTE"])
+    v151(["KMCP_INDEX"])
+    v144(( ))
+    end
+    v156(["SYLPH_SKETCHGENOMES"])
+    v160(["METACACHE_BUILD"])
+    v212(["MULTIQC"])
+    v85(( ))
+    v98(( ))
+    v104(( ))
+    v134(( ))
+    v162(( ))
+    subgraph "NFCORE_CREATETAXDB:CREATETAXDB:GENERATE_DOWNSTREAM_SAMPLESHEETS [GENERATE_DOWNSTREAM_SAMPLESHEETS]"
+    subgraph "NFCORE_CREATETAXDB:CREATETAXDB:GENERATE_DOWNSTREAM_SAMPLESHEETS:SAMPLESHEET_TAXPROFILER [SAMPLESHEET_TAXPROFILER]"
+    v179(( ))
+    end
+    end
+    v216(( ))
+    end
+    end
+    subgraph "PIPELINE_INITIALISATION [PIPELINE_INITIALISATION]"
+    v3(( ))
+    v8(( ))
+    end
+    subgraph "PIPELINE_COMPLETION [PIPELINE_COMPLETION]"
+    v218(( ))
+    end
+    v2 --> v3
+    v2 --> v8
+    v2 --> v31
+    v2 --> v51
+    v3 --> v7
+    v8 --> v12
+    v31 --> v39
+    v39 --> v31
+    v39 --> v40
+    v31 --> v49
+    v49 --> v91
+    v49 --> v121
+    v49 --> v40
+    v51 --> v59
+    v59 --> v40
+    v59 --> v51
+    v51 --> v69
+    v69 --> v96
+    v69 --> v40
+    v51 --> v76
+    v76 --> v40
+    v76 --> v79
+    v79 --> v82
+    v82 --> v113
+    v82 --> v40
+    v87 --> v91
+    v88 --> v91
+    v89 --> v91
+    v90 --> v91
+    v91 --> v85
+    v91 --> v162
+    v93 --> v96
+    v94 --> v96
+    v95 --> v96
+    v96 --> v85
+    v96 --> v162
+    v102 --> v104
+    v103 --> v104
+    v106 --> v107
+    v31 --> v107
+    v98 --> v107
+    v104 --> v107
+    v107 --> v108
+    v107 --> v85
+    v107 --> v162
+    v110 --> v113
+    v111 --> v113
+    v112 --> v113
+    v113 --> v116
+    v113 --> v115
+    v113 --> v114
+    v113 --> v162
+    v117 --> v121
+    v118 --> v121
+    v119 --> v121
+    v120 --> v121
+    v121 --> v125
+    v121 --> v122
+    v121 --> v123
+    v124 --> v125
+    v123 --> v125
+    v125 --> v128
+    v125 --> v129
+    v125 --> v127
+    v125 --> v126
+    v129 --> v131
+    v129 --> v130
+    v129 --> v162
+    v132 --> v134
+    v133 --> v134
+    v136 --> v137
+    v140 --> v141
+    v134 --> v141
+    v141 --> v142
+    v141 --> v162
+    v31 --> v146
+    v146 --> v151
+    v146 --> v148
+    v146 --> v147
+    v150 --> v151
+    v144 --> v151
+    v151 --> v153
+    v151 --> v152
+    v151 --> v162
+    v31 --> v156
+    v156 --> v85
+    v156 --> v162
+    v158 --> v160
+    v159 --> v160
+    v31 --> v160
+    v160 --> v161
+    v160 --> v162
+    v179 --> v185
+    v188 --> v85
+    v198 --> v85
+    v203 --> v85
+    v206 --> v85
+    v85 --> v212
+    v212 --> v215
+    v212 --> v214
+    v212 --> v213
+    v212 --> v216
+    v218 --> v219
+    v31 --> v98
+    v31 --> v134
+    v31 --> v144
+    v40 --> v85
+    v162 --> v179
+    v216 --> v218
+
+</pre>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, maxTextSize: Number.MAX_SAFE_INTEGER, maxEdges: Number.MAX_SAFE_INTEGER });
+</script>
+</body>
+</html>
