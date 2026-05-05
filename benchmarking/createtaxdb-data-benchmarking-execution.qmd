@@ -67,7 +67,7 @@ nextflow run nf-core/createtaxdb \
  -c custom.config
 ```
 
-The final custom config (optimised for use on this particular infrastructure) on the two infrastructures used for testing was:
+The final custom config (`custom.config`) optimised for use on this particular infrastructure) on the two infrastructures used for testing was:
 
 ```{groovy}
 process {
@@ -137,8 +137,40 @@ process {
                 cpus = '72'
         }
 }
+
 ```
 
+and `custom_small.config`
+
+```{groovy}
+process {
+        withName: 'KRAKEN2_BUILD'{
+                memory = '100.GB'
+                cpus   = '36'
+        }
+        withName: 'BRACKEN_BUILD'{
+                memory = '100.GB'
+                cpus   = '36'
+        }
+        withName: 'METACACHE_BUILD' {
+                memory = '100.GB'
+                cpus = '36'
+        }
+        withName: 'KRAKENUNIQ_BUILD' {
+                memory = '250.GB'
+                cpus = '72'
+                time = '24.h'
+        }
+        withName: 'KMCP_COMPUTE' {
+                memory = '100.GB'
+                cpus = '36'
+        }
+        withName: 'CENTRIFUGE_BUILD' {
+                memory = '250.GB'
+                cpus = '72'
+        }
+}
+```
 
 ## Harddrive usage
 
@@ -184,20 +216,21 @@ Results directory:
 ```{bash}
 #| eval: false
 $ du -h --max-depth 1 results_30000/
-2.8M    results_30000/multiqc
+2.3M    results_30000/multiqc
 1.5K    results_30000/downstream_samplesheets
 29G     results_30000/kaiju
 72G     results_30000/metacache
 170G    results_30000/kraken2
 1.2T    results_30000/krakenuniq
-28G     results_30000/kmcp
+27G     results_30000/kmcp
 2.8G    results_30000/sylph
 51G     results_30000/ganon
 6.1M    results_30000/pipeline_info
 26G     results_30000/diamond
 199G    results_30000/bracken
 32G     results_30000/centrifuge
-1.8T    results_30000/
+1.8T    results_30000
+
 ```
 
 ### 20k
@@ -240,20 +273,20 @@ Results directory:
 ```{bash}
 #| eval: false
 $ du -h --max-depth 1 results_20000/
-2.8M    results_20000/multiqc
+2.3M    results_20000/multiqc
 1.5K    results_20000/downstream_samplesheets
-19G     results_20000/kaiju
+20G     results_20000/kaiju
 51G     results_20000/metacache
 124G    results_20000/kraken2
 814G    results_20000/krakenuniq
-19G     results_20000/kmcp
+18G     results_20000/kmcp
 1.9G    results_20000/sylph
 36G     results_20000/ganon
 5.2M    results_20000/pipeline_info
 18G     results_20000/diamond
 143G    results_20000/bracken
 22G     results_20000/centrifuge
-1.3T    results_20000/
+1.3T    results_20000
 ```
 
 ### 10k
@@ -297,9 +330,9 @@ Results directory:
 ```{bash}
 #| eval: false
 $ du -h --max-depth 1 results_10000/
-2.8M    results_10000/multiqc
+2.3M    results_10000/multiqc
 1.5K    results_10000/downstream_samplesheets
-9.5G    results_10000/kaiju
+9.9G    results_10000/kaiju
 28G     results_10000/metacache
 74G     results_10000/kraken2
 446G    results_10000/krakenuniq
@@ -310,7 +343,8 @@ $ du -h --max-depth 1 results_10000/
 8.8G    results_10000/diamond
 83G     results_10000/bracken
 11G     results_10000/centrifuge
-686G    results_10000/
+686G    results_10000
+
 
 ```
 
@@ -346,7 +380,7 @@ nextflow run nf-core/createtaxdb \
  --generate_downstream_samplesheets \
  --generate_pipeline_samplesheets taxprofiler \
  -w work/ \
- -c custom.config
+ -c custom_small.config
 ```
 
 Results directory:
@@ -354,20 +388,21 @@ Results directory:
 ```{bash}
 #| eval: false
 $ du -h --max-depth 1 results_5000/
-2.8M    results_5000/multiqc
+2.3M    results_5000/multiqc
 1.5K    results_5000/downstream_samplesheets
-4.6G    results_5000/kaiju
+5.0G    results_5000/kaiju
 15G     results_5000/metacache
 48G     results_5000/kraken2
 238G    results_5000/krakenuniq
-6.8G    results_5000/kmcp
+6.1G    results_5000/kmcp
 452M    results_5000/sylph
 9.5G    results_5000/ganon
-3.7M    results_5000/pipeline_info
+6.8M    results_5000/pipeline_info
 4.3G    results_5000/diamond
 51G     results_5000/bracken
 5.2G    results_5000/centrifuge
-381G    results_5000/
+381G    results_5000
+
 ```
 
 ### 2k
@@ -403,7 +438,7 @@ nextflow run nf-core/createtaxdb \
  --generate_downstream_samplesheets \
  --generate_pipeline_samplesheets taxprofiler \
  -w work/ \
- -c custom.config
+ -c custom_small.config
 ```
 
 Results directory:
@@ -411,9 +446,9 @@ Results directory:
 ```{bash}
 #| eval: false
 $ du -h --max-depth 1 results_2000/
-2.8M    results_2000/multiqc
+2.3M    results_2000/multiqc
 1.5K    results_2000/downstream_samplesheets
-1.9G    results_2000/kaiju
+2.4G    results_2000/kaiju
 6.6G    results_2000/metacache
 32G     results_2000/kraken2
 109G    results_2000/krakenuniq
@@ -424,7 +459,8 @@ $ du -h --max-depth 1 results_2000/
 1.9G    results_2000/diamond
 33G     results_2000/bracken
 2.2G    results_2000/centrifuge
-192G    results_2000/
+193G    results_2000
+
 ```
 
 ### 1k
@@ -459,7 +495,7 @@ nextflow run nf-core/createtaxdb \
  --generate_downstream_samplesheets \
  --generate_pipeline_samplesheets taxprofiler \
  -w work/ \
- -c custom.config
+ -c custom_small.config
 ```
 
 Results directory:
@@ -467,19 +503,21 @@ Results directory:
 ```{bash}
 #| eval: false
 $ du -h --max-depth 1 results_1000/
-2.8M	results_1000/multiqc
-927M	results_1000/kaiju
-3.5G	results_1000/metacache
-26G	results_1000/kraken2
-59G	results_1000/krakenuniq
-1.4G	results_1000/kmcp
-91M	results_1000/sylph
-2.3G	results_1000/ganon
-3.4M	results_1000/pipeline_info
-956M	results_1000/diamond
-26G	results_1000/bracken
-1.1G	results_1000/centrifuge
-120G	results_1000/
+2.3M    results_1000/multiqc
+1.5K    results_1000/downstream_samplesheets
+1.4G    results_1000/kaiju
+3.5G    results_1000/metacache
+26G     results_1000/kraken2
+59G     results_1000/krakenuniq
+1.8G    results_1000/kmcp
+91M     results_1000/sylph
+2.3G    results_1000/ganon
+3.4M    results_1000/pipeline_info
+956M    results_1000/diamond
+26G     results_1000/bracken
+1.1G    results_1000/centrifuge
+120G    results_1000
+
 ```
 
 ### Aggregation
@@ -488,6 +526,18 @@ To aggregate all the results directory `du` commands all into one file, we can u
 
 ```{bash}
 #| eval: false
-for i in results_*; do du --max-depth 1 $i >> resource_usage_raw.tsv; done
-for i in results_*; do du -h --max-depth 1 $i >> resource_usage_humanreadable.tsv; done
+## WHILE IN `createtaxdb/`
+mkdir -p ../resource_tracking/createtaxdb/
+for i in results_*; do du --max-depth 1 $i >> ../resource_tracking/createtaxdb/createtaxdb_resource_usage_raw.tsv; done
+for i in results_*; do du -h --max-depth 1 $i >> ../resource_tracking/createtaxdb/createtaxdb_resource_usage_humanreadable.tsv; done
+```
+
+To get all trace files
+
+```{bash}
+for i in results_*; do
+  mkdir ../resource_tracking/createtaxdb/"$i"/
+  cp -r "$i"/pipeline_info/ ../resource_tracking/createtaxdb/"$i"/pipeline_info/
+done
+
 ```

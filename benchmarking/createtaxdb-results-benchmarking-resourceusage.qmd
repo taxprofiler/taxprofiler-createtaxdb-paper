@@ -47,7 +47,7 @@ First we can translate the Megabyte output from `du` to bytes (for later convers
 <!--TODO, get size of input genomes? -->
 
 ```{r}
-data_disk_raw <- read_tsv('resource_tracking/resource_usage_raw.tsv', col_names = c('directory_size_bytes', 'directory'))
+data_disk_raw <- read_tsv('resource_tracking/createtaxdb/createtaxdb_resource_usage_raw.tsv', col_names = c('directory_size_bytes', 'directory'))
 
 data_disk_clean <- data_disk_raw |>
   separate(directory, into = c('genomes', 'tool'), sep = '/') |> 
@@ -145,14 +145,14 @@ We can plot this using the Nextflow's own `pipeline_info` resource reports.
 
 ```{r}
 ## Load all trace files
-data_tracefiles_raw <- list.files('resource_tracking', full.names = TRUE, pattern = 'execution_trace_*.', recursive = TRUE) |> 
+data_tracefiles_raw <- list.files('resource_tracking/createtaxdb', full.names = TRUE, pattern = 'execution_trace_*.', recursive = TRUE) |> 
   read_tsv(id = "file_name")
 
 ## Clean up, including dropping duplicated rows due to cached tasks from `-resume`  runs, dropping non-building processes
 data_tracefiles_clean <- data_tracefiles_raw |> 
   filter(status == 'COMPLETED', !str_detect(name, 'MULTIQC|.*PREPROCESSING.*')) |> 
   rowwise() |> 
-  mutate(run = str_split(file_name, '/') |> unlist() |> pluck(2)) |> 
+  mutate(run = str_split(file_name, '/') |> unlist() |> pluck(3)) |> 
   mutate(
       n_genomes = as.numeric(str_remove(run, 'results_')),
       process = str_split(name, ':') |> unlist() |> pluck(-1) |> str_split(' ') |> unlist() |> pluck(1)
@@ -217,6 +217,7 @@ figure_memory_usage_scaled <- ggplot(data_tracefiles_clean, aes(x = n_genomes / 
 figure_memory_usage_scaled
 ```
 
+The decrease in memory usage in KMCP INDEX corresponds to a change in the auto-selected number of index files (6-7, up to 25).
 
 Or produce a second plot removing the outliers
 
@@ -240,10 +241,9 @@ figure_memory_usage + figure_memory_usage_filtered + plot_annotation(tag_levels 
 
 ## Combined Plots
 
-```{r fig.width=10, fig.height=4}
-final_resource_figure <- figure_memory_usage_scaled + figure_disk_usage_scaled + plot_annotation(title = 'Metagenomic classifier database construction tool compute resource usage on default settings', tag_levels = 'A')
-
+```{r fig.width=6, fig.height=8}
+final_resource_figure <- figure_memory_usage_scaled / figure_disk_usage_scaled + plot_annotation(tag_levels = 'A')
 final_resource_figure
 
-ggsave('fig3.png', final_resource_figure, height = 4, width = 10, dpi = 300)
+ggsave('fig3.png', final_resource_figure,width = 6, height = 8,  dpi = 300)
 ```
