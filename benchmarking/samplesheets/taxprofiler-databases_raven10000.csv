@@ -1,0 +1,13 @@
+tool,db_name,db_params,db_type,db_path
+sylph,benchmark_10000-sylph,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/sylph/benchmark_10000-sylph.syldb
+ganon,benchmark_10000-ganon,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/ganon/
+diamond,benchmark_10000-diamond,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/diamond/benchmark_10000-diamond.dmnd
+kmcp,benchmark_10000-kmcp,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/kmcp/benchmark_10000-kmcp-index
+kaiju,benchmark_10000-kaiju,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/kaiju/
+metacache,benchmark_10000-metacache,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/metacache/
+centrifuge,benchmark_10000-centrifuge,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/centrifuge/benchmark_10000-centrifuge
+bracken,benchmark_10000-bracken,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/bracken/benchmark_10000-bracken
+krakenuniq,benchmark_10000-krakenuniq,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/krakenuniq/benchmark_10000-krakenuniq
+motus,benchmark_30000-motus,,,/raven/u/jfellowsy/bin/miniconda3/envs/motus/lib/python3.9/site-packages/motus/db_mOTU
+melon,benchmark_30000-melon,,,/raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/databases/melon/database
+metaphlan,benchmark_30000-metaphlan,,,/raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/databases/metaphlan
