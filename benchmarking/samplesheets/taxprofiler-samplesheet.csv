@@ -1,4 +1,0 @@
-sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
-2604_sma,ERR5766165,ILLUMINA,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766165_1.fastq.gz,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766165_2.fastq.gz,
-2604_lar,ERR5766167,ILLUMINA,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766166_1.fastq.gz,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766166_2.fastq.gz,
-2604_med,ERR5766166,ILLUMINA,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766167_1.fastq.gz,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766167_2.fastq.gz,
