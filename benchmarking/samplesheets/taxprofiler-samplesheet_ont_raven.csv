@@ -1,0 +1,6 @@
+sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
+24_A46,SRR23924737,OXFORD_NANOPORE,/raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/SRR23924737_1.fastq.gz,,
+35_A50,SRR23924732,OXFORD_NANOPORE,/raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/SRR23924732_1.fastq.gz,,
+40_A49,SRR23924733,OXFORD_NANOPORE,/raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/SRR23924733_1.fastq.gz,,
+43_A47,SRR23924736,OXFORD_NANOPORE,/raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/SRR23924736_1.fastq.gz,,
+52_A48,SRR23924734,OXFORD_NANOPORE,/raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/SRR23924734_1.fastq.gz,,
