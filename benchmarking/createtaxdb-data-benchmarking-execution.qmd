@@ -539,5 +539,4 @@ for i in results_*; do
   mkdir ../resource_tracking/createtaxdb/"$i"/
   cp -r "$i"/pipeline_info/ ../resource_tracking/createtaxdb/"$i"/pipeline_info/
 done
-
 ```

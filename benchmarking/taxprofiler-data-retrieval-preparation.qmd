@@ -1,12 +1,12 @@
 ---
-title: "Benchmarking nf-core/createtaxdb data retrieval and preparation"
+title: "Benchmarking nf-core/taxprofiler data retrieval and preparation"
 author: "James Fellows Yates"
 format: html
 ---
 
 ## Introduction
 
-This notebook describes to retrieve the data used for nf-core/createtaxdb benchmarking.
+This notebook describes to retrieve the data used for nf-core/taxprofiler benchmarking.
 
 For this benchmarking, we will perform two analyses on real datasets:
 
@@ -45,33 +45,38 @@ As the samples are human palaeofaeces, and have been handled by human archaeolog
 We will use the optimised reference telomere-to-telomere plus HLA sequences offered by the tool [`hostile`](https://github.com/bede/hostile).
 
 ```{bash}
+mkdir reference/
 export HOSTILE_CACHE_DIR=$(readlink -f reference/)
 hostile index fetch --name human-t2t-hla --bowtie2 --minimap2
 ```
 
-### Ancient DNA dataset 
+### Ancient DNA dataset (Illumina) 
 
 To test resource usage on different sequencing depths, we will use a sample from [Maixer 2022](https://doi.org/10.1038/s41564-022-01270-1), where an ancient palaeofaeces sequencing library was sequenced multiple times at different depths.
 
 ```{bash}
 #| eval: false
+
+mkdir sequencing_reads/
+
 curl -o sequencing_reads/PRJEB44507.tsv "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJEB44507&result=read_run&fields=study_accession,sample_accession,secondary_sample_accession,experiment_accession,run_accession,tax_id,scientific_name,instrument_platform,instrument_model,library_name,nominal_length,library_layout,library_strategy,library_source,library_selection,read_count,fastq_bytes,fastq_md5,fastq_ftp,submitted_bytes,submitted_md5,submitted_ftp,submitted_aspera,submitted_format,sra_ftp,sample_alias,sample_title,bam_ftp&format=tsv&download=true&limit=0"
 grep -e "/2604" sequencing_reads/PRJEB44507.tsv > sequencing_reads/PRJEB44507_2604only.tsv
 
 ## To Download
-for i in $(awk -F '\t' '{ print $19 }' sequencing_reads/PRJEB44507_2604only.tsv); do
+for i in $(awk -F '\t' '{ print $19 }' sequencing_reads/PRJEB44507_2604only.tsv | tail -n 1); do
+  echo "#### $i #####"
   curl $(echo $i | cut -d ';' -f 1) --remote-name --create-dirs --output-dir sequencing_reads
   curl $(echo $i | cut -d ';' -f 2) --remote-name --create-dirs --output-dir sequencing_reads
 done
 ```
 
-Once downloaded, we can write create the samplesheet, which looks like this:
+Once downloaded, we can write create the samplesheet in `../samplesheets/`, which looks like this:
 
 ```{csv}
 sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
 2604_sma,ERR5766165,ILLUMINA,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766165_1.fastq.gz,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766165_2.fastq.gz,
-2604_lar,ERR5766167,ILLUMINA,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766166_1.fastq.gz,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766166_2.fastq.gz,
-2604_med,ERR5766166,ILLUMINA,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766167_1.fastq.gz,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766167_2.fastq.gz,
+2604_med,ERR5766166,ILLUMINA,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766166_1.fastq.gz,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766166_2.fastq.gz,
+2604_lar,ERR5766167,ILLUMINA,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766167_1.fastq.gz,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/ERR5766167_2.fastq.gz,
 ```
 
 Where each sample name corresponds to
@@ -81,6 +86,36 @@ Where each sample name corresponds to
 - `_large` deep sequencing depth at 200 million reads
 
 
+
+### Activated sludge dataset (Nanopore)
+
+
+- https://link.springer.com/article/10.1186/s40168-022-01415-8#Sec9
+  - Activated sludge sample
+  - 5 flowcells 
+  - Data: PRJNA803959
+  - depths: 2463130, 3568397, 4022194, 4329789, 5235163
+
+```{bash}
+curl -o sequencing_reads/PRJNA803959.tsv "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA803959&result=read_run&fields=study_accession,sample_accession,secondary_sample_accession,experiment_accession,run_accession,tax_id,scientific_name,instrument_platform,instrument_model,library_name,nominal_length,library_layout,library_strategy,library_source,library_selection,read_count,fastq_bytes,fastq_md5,fastq_ftp,submitted_bytes,submitted_md5,submitted_ftp,submitted_aspera,submitted_format,sra_ftp,sample_alias,sample_title,bam_ftp&format=tsv&download=true&limit=0"
+grep -P "GridION\tA" sequencing_reads/PRJNA803959.tsv | grep 'WGS' | sort -k 15 > sequencing_reads/PRJNA803959_Asamplesonly.tsv
+
+## To Download
+for i in $(awk -F '\t' '{ print $19 }' sequencing_reads/PRJNA803959_Asamplesonly.tsv); do
+  echo "#### $i #####"
+  curl $(echo $i | cut -d ';' -f 1) --remote-name --create-dirs --output-dir sequencing_reads
+done
+```
+
+```{csv}
+sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
+24_A46,SRR23924737,OXFORD_NANOPORE,/raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/SRR23924737_1.fastq.gz,,
+35_A50,SRR23924732,OXFORD_NANOPORE,/raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/SRR23924732_1.fastq.gz,,
+40_A49,SRR23924733,OXFORD_NANOPORE,/raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/SRR23924733_1.fastq.gz,,
+43_A47,SRR23924736,OXFORD_NANOPORE,/raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/SRR23924736_1.fastq.gz,,
+52_A48,SRR23924734,OXFORD_NANOPORE,/raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/sequencing_reads/SRR23924734_1.fastq.gz,,
+```
+
 ### Databases
 
 Most of the databases were generated with nf-core/createtaxdb.
@@ -88,7 +123,7 @@ Two tools however do not provide customisation, and pre-built provided databases
 
 ```{bash}
 ### motus
-conda create -n motus -c bioconda motus=3
+conda create -n motus -c bioconda motus=3 -y
 conda activate motus
 motus downloadDB
 conda deactivate
@@ -98,9 +133,31 @@ ln -s ~/bin/miniconda3/envs/motus/lib/python3.9/site-packages/motus/db_mOTU .  #
 
 ### metaphlan
 conda deactivate
-conda create -n metaphlan=4.2.4 -c bioconda metaphlan= -y
+conda create -n metaphlan -c bioconda metaphlan=4.2.4 -y
 conda activate metaphlan
 metaphlan --install --db_dir metaphlan/
+
+### melon (RUN DIAMOND/MINIMAP ON COMPUTE NODE!)
+conda deactivate
+conda create -n melon=0.3.0 -c bioconda melon -y
+
+wget -qN --show-progress https://zenodo.org/records/15231351/files/database.tar.gz
+tar -zxvf database.tar.gz
+
+## if you encounter memory issue please consider manually lowering cpu_count or simply set cpu_count=1
+cpu_count=$(python -c 'import os; print(os.cpu_count())')
+
+diamond makedb --in database/prot.fa --db database/prot --quiet
+ls database/nucl.*.fa | sort | xargs -P $cpu_count -I {} bash -c '
+    filename=$(basename ${1} .fa);
+    minimap2 -x map-ont -d database/$filename.mmi ${1} 2> /dev/null;
+    echo "Indexed <database/$filename.fa>.";
+' - {}
+
+
+## remove unnecessary files to save space
+rm -rf database/*.fa
+
+conda deactivate
 ```
 
-/vol/permanent/clinical_metagenomics/samplesheet_denbi.csv
