@@ -83,7 +83,7 @@ Where each sample name corresponds to
 
 - `_sma` shallow sequencing depth library at 20 million reads
 - `_med` middle-sequencing depth at 100 million
-- `_large` deep sequencing depth at 200 million reads
+- `_lar` deep sequencing depth at 200 million reads
 
 
 

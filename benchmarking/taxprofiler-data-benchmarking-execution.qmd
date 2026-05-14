@@ -368,7 +368,7 @@ nextflow run nf-core/taxprofiler \
  --run_krakenuniq \
  --run_melon \
  --run_metacache \
- --run_metaphlan \
+ #--run_metaphlan \
  --run_motus \
  --run_sylph \
  --run_profile_standardisation \
