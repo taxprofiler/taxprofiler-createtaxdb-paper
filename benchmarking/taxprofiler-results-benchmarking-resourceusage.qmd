@@ -53,7 +53,7 @@ data_tracefiles_clean <- data_tracefiles_raw |>
   mutate(sample_name = str_split(name, '\\|') |> unlist() |> pluck(-1) |> str_remove('\\)')) |> 
   mutate(
       process = str_split(name, ':') |> unlist() |> pluck(-1) |> str_split(' ') |> unlist() |> pluck(1),
-      nr_genomes = str_split(name, '\\|') |> unlist() |> pluck(1) |> str_remove(".* \\(benchmark_") |> str_remove("-.*"),
+      nr_genomes = str_split(name, '\\|') |> unlist() |> pluck(1) |> str_remove(".* \\(benchmark_") |> str_remove("-.*") |> as.numeric(),
       sample_depth = case_when(
           str_ends(sample_name, ".*_sma") ~ 2000000,
           str_ends(sample_name, ".*_med") ~ 100000000,
@@ -86,19 +86,19 @@ palette_custom_process = c(
   "SYLPH_PROFILE" = "#6a3d9a"
 )
 
-figure_memory_usage <- ggplot(data_tracefiles_clean |> filter(process != 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ'), aes(x = sample_depth, y = peak_vmem_value_gb, color = process, shape = process)) +
+figure_memory_usage <- ggplot(data_tracefiles_clean |> filter(process != 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ'), aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
   geom_point(size = 2) +
   geom_line() +
   scale_shape_manual(values = 1:13) +
-  scale_colour_manual(values = palette_custom_process) +
+  #scale_colour_manual(values = palette_custom_process) +
   ylab('Peak virtual memory (GB)') +
-  xlab('Number of sequenced reads (approx)') +
+  xlab('Size of database (nr. genomes, approx)') +
   labs(
     colour = 'Tool Process', 
     shape = 'Tool Process'
     ) +
   theme_minimal() +
-  facet_wrap(~nr_genomes)
+  facet_wrap(~process)
 
 figure_memory_usage
 ```
