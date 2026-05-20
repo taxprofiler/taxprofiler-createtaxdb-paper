@@ -21,7 +21,6 @@ We will benchmarking with v2.1.0 of nf-core/taxprofiler with Nextflow version 25
 ```{bash}
 #| eval: false
 
-## TO UPDATE ######################
 nextflow pull nf-core/taxprofiler -r 2.0.0
 ```
 
@@ -40,45 +39,9 @@ We can then run nf-core/taxprofiler on this dataset of 3 differently depth-seque
 
 ### 30k
 
+(Note: we had to run on different infrastructure due to wall-time restrictions, compared to the smaller database runs)
+
 For example, for the full dataset of just under ~30,000 genomes:
-
-```{bash}
-#| eval: false
-nextflow run nf-core/taxprofiler \
- -r 2.0.0 \
- --input /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/samplesheets/taxprofiler-samplesheet_raven.csv \
- --databases /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/samplesheets/taxprofiler-databases_raven30000.csv \
- -profile mpcdf,raven \
- -name txp_benchmark_30000 \
- --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/results_illumina_30000/ \
- --perform_shortread_qc \
- --shortread_qc_dedup \
- --perform_shortread_complexityfilter \
- --perform_shortread_redundancyestimation \
- --perform_shortread_hostremoval \
- --hostremoval_reference /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/human-t2t-hla.fa.gz \
- --shortread_hostremoval_index /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/ \
- --run_bracken \
- --run_centrifuge \
- --run_diamond \
- --run_ganon \
- --run_kaiju \
- --run_kmcp \
- --run_kraken2 \
- --run_krakenuniq \
- --run_melon \
- --run_metacache \
- --run_metaphlan \
- --run_motus \
- --run_sylph \
- --run_profile_standardisation \
- --run_krona \
- --taxpasta_taxonomy_dir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/ \
- --sylph_taxonomy /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
- -c custom.config
-```
-
-<!--
 
 ```{bash}
 #| eval: false
@@ -114,63 +77,103 @@ nextflow run nf-core/taxprofiler \
  --sylph_taxonomy /vol/permanent/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
  -c custom.config
 ```
-```
 
--->
-
-The final custom config (optimised for use on this particular infrastructure) on the two infrastructures used for testing was:
+The configuration file used was:
 
 ```{groovy}
 process {
-	withName: 'FASTP_PAIRED' {
-		cpus   = 24
-		memory = '110.GB'
-	}
-	withName: 'NONPAREIL_NONPAREIL' {
-		ext.args = { "-k 12" } ## aDNA reads are very short
-	} 
+        withName: 'FASTP_PAIRED' {
+                cpus   = 20
+                memory = '100.GB'
+        }
+        withName: 'NONPAREIL_NONPAREIL' {
+                ext.args = "-k 15"
+        } 
         withName: 'KAIJU_KAIJU' {
                 memory = '100.GB'
-                cpus   = '18'
+                cpus   = '20'
         }
         withName: 'GANON_CLASSIFY' {
-                memory = '72.GB'
-                cpus   = '18'
+                memory = '100.GB'
+                cpus   = '20'
+        }
+        withName: 'KMCP_PROFILE' {
+                memory = '400.GB'
+                cpus = '20'
+                time = '365.d'
         }
         withName: 'KRAKEN2_KRAKEN2'{
-                memory = '240.GB'
-                cpus   = '72'
+                memory = '100.GB'
+                cpus   = '20'
         }
         withName: 'BRACKEN_BRACKEN'{
-                memory = '240.GB'
-                cpus   = '72'
+                memory = '120.GB'
+                cpus   = '20'
         }
         withName: 'METACACHE_QUERY' {
-                memory = '240.GB'
-                cpus = '72'
+                memory = '100.GB'
+                cpus = '20'
         }
         withName: 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ' {
-                memory = '2047.GB'
-                cpus = '72'
-                time = '24.h'
+                memory = '900.GB'
+                cpus = '56'
         }
         withName: 'CENTRIFUGE_CENTRIFUGE' {
-                memory = '2047.GB'
-                cpus = '72'
-                time = '24.h'
+                memory = '400.GB'
+                cpus = '20'
+                time = '365.d'
         }
-	withName: 'TAXPASTA_MERGE' {
-		errorStrategy = 'ignore' ## Due to bug in MetaPhlAn
-		memory = '24.GB'
-		cpus = '1'
-		time = '4.h'
-	}
+        withName: 'TAXPASTA_MERGE' {
+                errorStrategy = 'ignore'
+                memory = '24.GB'
+                cpus = '1'
+        }
 }
+```
 
+### 20k
 
+Note: we had to run on different infrastructure due to walltime restrictions
+
+```{bash}
+#| eval: false
+nextflow run nf-core/taxprofiler \
+ -r 2.0.0 \
+ --input /vol/permanent/benchmarking/samplesheets/taxprofiler-samplesheet_denbi.csv \
+ --databases /vol/permanent/benchmarking/samplesheets/taxprofiler-databases_denbi20000.csv \
+ -name txp_benchmark_20000 \
+ --outdir /vol/permanent/benchmarking/taxprofiler/results_20000/ \
+ --perform_shortread_qc \
+ --shortread_qc_dedup \
+ --perform_shortread_complexityfilter \
+ --perform_shortread_redundancyestimation \
+ --perform_shortread_hostremoval \
+ --hostremoval_reference /vol/permanent/benchmarking/reference/human-t2t-hla.fa.gz \
+ --shortread_hostremoval_index /vol/permanent/benchmarking/reference/ \
+ --run_bracken \
+ --run_centrifuge \
+ --run_diamond \
+ --run_ganon \
+ --run_kaiju \
+ --run_kmcp \
+ --run_kraken2 \
+ --run_krakenuniq \
+ --run_melon \
+ --run_metacache \
+ --run_metaphlan \
+ --run_motus \
+ --run_sylph \
+ --run_profile_standardisation \
+ --run_krona \
+ --taxpasta_taxonomy_dir /vol/permanent/benchmarking/auxiliary_files/ \
+ --sylph_taxonomy /vol/permanent/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
+ -c custom.config
 ```
 
 ### 10k
+
+(Note: we had to run on different infrastructure due to wall-time restrictions, compared to the smaller database runs)
+
 
 ```{bash}
 #| eval: false
@@ -244,6 +247,58 @@ nextflow run nf-core/taxprofiler \
  --taxpasta_taxonomy_dir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/ \
  --sylph_taxonomy /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
  -c custom_small.config
+```
+
+The final custom config (optimised for use on this particular infrastructure) on the two infrastructures used for testing was:
+
+```{groovy}
+process {
+	withName: 'FASTP_PAIRED' {
+		cpus   = 24
+		memory = '110.GB'
+	}
+	withName: 'NONPAREIL_NONPAREIL' {
+		ext.args = { "-k 12" } ## aDNA reads are very short
+	} 
+        withName: 'KAIJU_KAIJU' {
+                memory = '100.GB'
+                cpus   = '18'
+        }
+        withName: 'GANON_CLASSIFY' {
+                memory = '72.GB'
+                cpus   = '18'
+        }
+        withName: 'KRAKEN2_KRAKEN2'{
+                memory = '240.GB'
+                cpus   = '72'
+        }
+        withName: 'BRACKEN_BRACKEN'{
+                memory = '240.GB'
+                cpus   = '72'
+        }
+        withName: 'METACACHE_QUERY' {
+                memory = '240.GB'
+                cpus = '72'
+        }
+        withName: 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ' {
+                memory = '2047.GB'
+                cpus = '72'
+                time = '24.h'
+        }
+        withName: 'CENTRIFUGE_CENTRIFUGE' {
+                memory = '2047.GB'
+                cpus = '72'
+                time = '24.h'
+        }
+	withName: 'TAXPASTA_MERGE' {
+		errorStrategy = 'ignore' ## Due to bug in MetaPhlAn
+		memory = '24.GB'
+		cpus = '1'
+		time = '4.h'
+	}
+}
+
+
 ```
 
 ### 2k
@@ -447,3 +502,22 @@ nextflow run nf-core/taxprofiler \
  -c custom_small.config
 ```
 
+
+### Aggregation
+
+```{bash}
+#| eval: false
+## WHILE IN `taxprofiler/`
+mkdir -p ../resource_tracking/taxprofiler_ont/
+for i in results_ont_*; do du --max-depth 1 $i >> ../resource_tracking/taxprofiler_ont/taxprofiler_ont_resource_usage_raw.tsv; done
+for i in results_ont_*; do du -h --max-depth 1 $i >> ../resource_tracking/taxprofiler_ont/taxprofiler_ont_resource_usage_humanreadable.tsv; done
+```
+
+To get all trace files
+
+```{bash}
+for i in results_ont_*; do
+  mkdir ../resource_tracking/taxprofiler_ont/"$i"/
+  cp -r "$i"/pipeline_info/ ../resource_tracking/taxprofiler_ont/"$i"/pipeline_info/
+done
+```

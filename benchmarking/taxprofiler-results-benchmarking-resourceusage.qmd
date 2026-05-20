@@ -37,18 +37,33 @@ sessionInfo()
 ```
 ## Illumina
 
-### Compute resource usage
+### RAM Usage
 
-We can plot this using the Nextflow's own `pipeline_info` resource reports the amount of memory each classifer required for profiling the three types of data.
+We can plot this using the Nextflow's own `pipeline_info` resource reports the amount of memory each classifier required for profiling the three types of data.
 
 ```{r}
 ## Load all trace files
-data_tracefiles_raw <- list.files('resource_tracking/taxprofiler_illumina', full.names = TRUE, pattern = 'execution_trace_*.', recursive = TRUE) |> 
+data_tracefiles_raw_illumina <- list.files('resource_tracking/taxprofiler_illumina', full.names = TRUE, pattern = 'execution_trace_*.', recursive = TRUE) |> 
   read_tsv(id = "file_name")
 
+processes_to_remove_illumina = c(
+  'MULTIQC',
+  '.*PREPROCESSING.*',
+  '.*SHORTREAD_HOSTREMOVAL.*',
+  '.*SHORTREAD_COMPLEXITYFILTERING.*',
+  '.*NONPAREIL.*',
+  '.*FASTQC.*',
+  '.*STANDARDISATION_PROFILES.*',
+  '.*VISUALIZATION.*',
+  '.*KREPORT.*',
+  '.*GANON_REPORT.*',
+  '.*KAIJU2TABLE.*',
+  '.*SYLPHTAX_TAXPROF.*'
+)
+
 ## Clean up, including dropping duplicated rows due to cached tasks from `-resume`  runs, dropping non-building processes
-data_tracefiles_clean <- data_tracefiles_raw |> 
-  filter(status == 'COMPLETED', !str_detect(name, 'MULTIQC|.*PREPROCESSING.*|.*SHORTREAD_HOSTREMOVAL.*|.*SHORTREAD_COMPLEXITYFILTERING.*|.*NONPAREIL.*|.*FASTQC.*|.*STANDARDISATION_PROFILES.*|.*VISUALIZATION.*|.*KREPORT.*|.*GANON_REPORT.*|.*KAIJU2TABLE.*|.*SYLPHTAX_TAXPROF.*')) |> 
+data_tracefiles_clean_illumina <- data_tracefiles_raw_illumina |> 
+  filter(status == 'COMPLETED', !str_detect(name, paste0(processes_to_remove_illumina, collapse = '|'))) |> 
   rowwise() |> 
   mutate(sample_name = str_split(name, '\\|') |> unlist() |> pluck(-1) |> str_remove('\\)')) |> 
   mutate(
@@ -70,7 +85,7 @@ data_tracefiles_clean <- data_tracefiles_raw |>
 We can then plot the memory usage of each process, with each size of input datasets.
 
 ```{r}
-palette_custom_process = c(
+palette_custom_process_illumina = c(
   "BRACKEN_BRACKEN" = "#a6cee3",
   "CENTRIFUGE_CENTRIFUGE" = "#1f78b4",
   "DIAMOND_BLASTX" = "#ccebc5",
@@ -86,69 +101,155 @@ palette_custom_process = c(
   "SYLPH_PROFILE" = "#6a3d9a"
 )
 
-figure_memory_usage <- ggplot(data_tracefiles_clean |> filter(process != 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ'), aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
+figure_memory_usage_illumina <- ggplot(data_tracefiles_clean_illumina |> filter(process != 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ'), aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
   geom_point(size = 2) +
   geom_line() +
   scale_shape_manual(values = 1:13) +
-  #scale_colour_manual(values = palette_custom_process) +
+  #scale_colour_manual(values = palette_custom_process_illumina) +
   ylab('Peak virtual memory (GB)') +
   xlab('Size of database (nr. genomes, approx)') +
   labs(
     colour = 'Tool Process', 
     shape = 'Tool Process'
     ) +
-  theme_minimal() +
+  theme_bw() +
   facet_wrap(~process)
 
-figure_memory_usage
+figure_memory_usage_illumina
 ```
 To see more detail of the bulk of the tools, we can scale the Y axis
 
 ```{r}
-figure_memory_usage_scaled <- ggplot(data_tracefiles_clean, aes(x = n_genomes / 1000, y = peak_vmem_value_gb, color = process, shape = process)) +
+figure_memory_usage_scaled_illumina <- ggplot(data_tracefiles_clean_illumina |> filter(process != 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ'), aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
   geom_point(size = 2) +
   geom_line() +
-  scale_shape_manual(values = 1:16) +
-  scale_colour_manual(values = palette_custom_process) +
+  scale_shape_manual(values = 1:13) +
   scale_y_log10(guide = "axis_logticks", labels = label_bytes(scale = 1000000000)) +
-  ylab('Peak virtual memory (log10)') +
-  xlab('Number of genomes (thousands)') +
+  ylab('Peak virtual memory (GB)') +
+  xlab('Size of database (nr. genomes, approx)') +
   labs(
     colour = 'Tool Process', 
     shape = 'Tool Process'
     ) +
-  theme_minimal()
+  theme_bw() +
+  facet_wrap(~process)
 
-figure_memory_usage_scaled
+figure_memory_usage_scaled_illumina
+```
+## ONT
+
+### RAM Usage
+
+We can plot this using the Nextflow's own `pipeline_info` resource reports the amount of memory each classifer required for profiling the three types of data.
+
+```{r}
+## Load all trace files
+data_tracefiles_raw_ont <- list.files('resource_tracking/taxprofiler_ont', full.names = TRUE, pattern = 'execution_trace_*.', recursive = TRUE) |> 
+  read_tsv(id = "file_name")
+
+processes_to_remove_ont = c(
+  'MULTIQC',
+  '.*PREPROCESSING.*',
+  '.*MINIMAP2_ALIGN.*',
+  '.*SAMTOOLS_VIEW.*',
+  '.*SAMTOOLS_STATS.*',
+  '.*SAMTOOLS_FASTQ.*',
+  '.*NONPAREIL.*',
+  '.*FASTQC.*',
+  '.*STANDARDISATION_PROFILES.*',
+  '.*VISUALIZATION.*',
+  '.*KREPORT.*',
+  '.*GANON_REPORT.*',
+  '.*KAIJU2TABLE.*',
+  '.*SYLPHTAX_TAXPROF.*',
+  '.*MOTUS_PREPLONG.*'
+)
+
+## Clean up, including dropping duplicated rows due to cached tasks from `-resume`  runs, dropping non-building processes
+data_tracefiles_clean_ont <- data_tracefiles_raw_ont |> 
+  filter(status == 'COMPLETED', !str_detect(name, paste0(processes_to_remove_ont, collapse = '|'))) |> 
+  rowwise() |> 
+  mutate(sample_name = str_split(name, '\\|') |> unlist() |> pluck(-1) |> str_remove('\\)')) |> 
+  mutate(
+      process = str_split(name, ':') |> unlist() |> pluck(-1) |> str_split(' ') |> unlist() |> pluck(1),
+      nr_genomes = str_split(name, '\\|') |> unlist() |> pluck(1) |> str_remove(".* \\(benchmark_") |> str_remove("-.*") |> as.numeric(),
+      sample_depth = case_when(
+          str_starts(sample_name, "24_") ~ 2400000,
+          str_starts(sample_name, "35_") ~ 3500000,
+          str_starts(sample_name, "40_") ~ 4000000,
+          str_starts(sample_name, "43_") ~ 4300000,
+          str_starts(sample_name, "52_") ~ 4300000,
+      )
+    ) |>
+  arrange(sample_depth) |> 
+  select(sample_depth, sample_name, nr_genomes, process, peak_vmem) |> 
+  unique() |> 
+  separate(peak_vmem, c('peak_vmem_value', 'peak_vmem_unit'), sep = ' ') |> 
+  mutate(peak_vmem_value_gb = ifelse(peak_vmem_unit == 'MB', as.numeric(peak_vmem_value) / 1000, as.numeric(peak_vmem_value) ))
 ```
 
-The decrease in memory usage in KMCP INDEX corresponds to a change in the auto-selected number of index files (6-7, up to 25).
+We can then plot the memory usage of each process, with each size of input datasets.
 
-Or produce a second plot removing the outliers
+```{r}
+palette_custom_process_ont = c(
+  "BRACKEN_BRACKEN" = "#a6cee3",
+  "CENTRIFUGE_CENTRIFUGE" = "#1f78b4",
+  "DIAMOND_BLASTX" = "#ccebc5",
+  "GANON_CLASSIFY" = "#33a02c",
+  "KAIJU_KAIJU" = "#fb9a99",
+  "KMCP_SEARCH" = "#e3211c",
+  "KMCP_PROFILE" = "#e3211c",
+  "KRAKEN2_KRAKEN2" = "#fdbf6f",
+  "KRAKENUNIQ_PRELOADEDKRAKENUNIQ" = "#ff7f00",
+  "METACACHE_QUERY" = "#cab2d6",
+  "METAPHLAN_METAPHLAN" = "grey",
+  "MOTUS_PROFILE" = "black",  
+  "SYLPH_PROFILE" = "#6a3d9a"
+)
 
-
-```{r fig.width=10}
-figure_memory_usage_filtered <- ggplot(data_tracefiles_clean |> filter(!process %in% c('CENTRIFUGE_BUILD', 'KRAKENUNIQ_BUILD')), aes(x = n_genomes / 1000, y = peak_vmem_value_gb, color = process, shape = process)) +
+figure_memory_usage_ont <- ggplot(data_tracefiles_clean_ont |> filter(process != 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ'), aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
   geom_point(size = 2) +
   geom_line() +
-  scale_shape_manual(values = 1:16) +
-  scale_colour_manual(values = palette_custom_process) +
+  scale_shape_manual(values = 1:13) +
+  #scale_colour_manual(values = palette_custom_process_ont) +
   ylab('Peak virtual memory (GB)') +
-  xlab('Number of genomes (thousands)') +
+  xlab('Size of database (nr. genomes, approx)') +
   labs(
     colour = 'Tool Process', 
     shape = 'Tool Process'
     ) +
-  theme_minimal()
+  theme_bw() +
+  facet_wrap(~process)
 
-figure_memory_usage + figure_memory_usage_filtered + plot_annotation(tag_levels = 'A')
+figure_memory_usage_ont
+```
+To see more detail of the bulk of the tools, we can scale the Y axis
+
+```{r}
+figure_memory_usage_scaled_ont <- ggplot(data_tracefiles_clean_ont |> filter(process != 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ'), aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
+  geom_point(size = 2) +
+  geom_line() +
+  scale_shape_manual(values = 1:13) +
+  scale_y_log10(guide = "axis_logticks", labels = label_bytes(scale = 1000000000)) +
+  ylab('Peak virtual memory (GB)') +
+  xlab('Size of database (nr. genomes, approx)') +
+  labs(
+    colour = 'Tool Process', 
+    shape = 'Tool Process'
+    ) +
+  theme_bw() +
+  facet_wrap(~process)
+
+figure_memory_usage_scaled_ont
 ```
 
-### Combined Plots
+## Combined Plots
+
+<!-- TODO TO UPDATE --> 
 
 ```{r fig.width=6, fig.height=8}
-final_resource_figure <- figure_memory_usage_scaled / figure_disk_usage_scaled + plot_annotation(tag_levels = 'A')
-final_resource_figure
+final_resource_figure_illumina <- figure_memory_usage_scaled_illumina / figure_disk_usage_scaled_illumina + plot_annotation(tag_levels = 'A')
+final_resource_figure_illumina
 
-ggsave('fig3.png', final_resource_figure,width = 6, height = 8,  dpi = 300)
+ggsave('fig4-taxprofiler-resourceusage.png', final_resource_figure_illumina, width = 6, height = 8,  dpi = 300)
 ```

@@ -5,6 +5,7 @@ diamond,benchmark_20000-diamond,,,/ptmp/jfellowsy/projects/taxprofiler-createtax
 kmcp,benchmark_20000-kmcp,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_20000/kmcp/benchmark_20000-kmcp-index
 kaiju,benchmark_20000-kaiju,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_20000/kaiju/
 metacache,benchmark_20000-metacache,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_20000/metacache/
+kraken2,benchmark_20000-kraken2,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_20000/kraken2/benchmark_20000-kraken2
 bracken,benchmark_20000-bracken,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_20000/bracken/benchmark_20000-bracken
 centrifuge,benchmark_20000-centrifuge,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_20000/centrifuge/benchmark_20000-centrifuge
 krakenuniq,benchmark_20000-krakenuniq,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_20000/krakenuniq/benchmark_20000-krakenuniq
