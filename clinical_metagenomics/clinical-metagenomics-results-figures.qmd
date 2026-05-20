@@ -1,0 +1,56 @@
+---
+title: "Clinical metagenomics results and figures"
+author: "Sofia Stamouli"
+format: html
+---
+
+
+## Figures for Nanopore-sequenced clinical metagenomics data
+
+### Metacache
+
+For Metacache results, we needed to do some postprocessing steps to get the data into a format that could be plotted.
+
+```
+for file in *_metacache.mapping.txt; do
+    outfile="${file%.mapping.txt}_lineage.txt"
+
+    grep -v '^#' "$file" \
+    | cut -d'|' -f4 \
+    | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' \
+    | taxonkit lineage 2>/dev/null \
+    | awk -F'\t' '
+        BEGIN{OFS="\t"}
+        $2=="" {print $1, "Unclassified"; next}
+        {print}
+    ' \
+    > "$outfile"
+done
+```
+
+To get the number of reads assigned to each taxonomic level, we can use the following command:
+
+```
+for file in *_lineage.txt; do
+    outfile="${file%.txt}_summary.txt"
+
+    awk '
+    /;Bacteria/      {bacteria++}
+    /^.*Viruses/     {viruses++}
+    /;Eukaryota/     {eukaryota++}
+    /;Archaea/       {archaea++}
+    /Unclassified/   {unclassified++}
+
+    END {
+        total=bacteria+viruses+eukaryota+archaea+unclassified
+
+        printf "Bacteria:\t%d\t(%.2f%%)\n", bacteria, (bacteria/total)*100
+        printf "Viruses:\t%d\t(%.2f%%)\n", viruses, (viruses/total)*100
+        printf "Eukaryota:\t%d\t(%.2f%%)\n", eukaryota, (eukaryota/total)*100
+        printf "Archaea:\t%d\t(%.2f%%)\n", archaea, (archaea/total)*100
+        printf "Unclassified:\t%d\t(%.2f%%)\n", unclassified, (unclassified/total)*100
+        printf "Total:\t%d\n", total
+    }' "$file" > "$outfile"
+
+done
+```

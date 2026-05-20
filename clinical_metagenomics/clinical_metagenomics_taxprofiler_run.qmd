@@ -39,5 +39,5 @@ metacache,metacache,-taxids -separate-cols -lowest species,long,/path/to/metacac
 diamond,diamond_long,--outfmt 102 --long-reads --block-size 6 --index-chunks 1,long,/path/to/benlangmead-diamond.dmnd
 sylph,sylph,-u --min-number-kmers 3 --minimum-ani 85,long,/path/to/benlangmead-sylph.syldb
 kraken2,k2_pluspf,,short;long,/path/to/benlangmead-kraken2
-diamond,diamond_short,--outfmt 102 --block-size 6 --index-chunks 1,short,/path/tobenlangmead-diamond.dmnd
+diamond,diamond_short,--outfmt 102 --block-size 6 --index-chunks 1,short,/path/to/benlangmead-diamond.dmnd
 ```

@@ -83,7 +83,7 @@ Where each sample name corresponds to
 
 - `_sma` shallow sequencing depth library at 20 million reads
 - `_med` middle-sequencing depth at 100 million
-- `_large` deep sequencing depth at 200 million reads
+- `_lar` deep sequencing depth at 200 million reads
 
 
 
@@ -139,9 +139,9 @@ metaphlan --install --db_dir metaphlan/
 
 ### melon (RUN DIAMOND/MINIMAP ON COMPUTE NODE!)
 conda deactivate
-conda create -n melon=0.3.0 -c bioconda melon -y
+conda create -n melon -c bioconda melon==0.2.5 -y
 
-wget -qN --show-progress https://zenodo.org/records/15231351/files/database.tar.gz
+wget -qN --show-progress https://zenodo.org/records/12571302/files/database.tar.gz
 tar -zxvf database.tar.gz
 
 ## if you encounter memory issue please consider manually lowering cpu_count or simply set cpu_count=1

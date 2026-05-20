@@ -1,0 +1,154 @@
+---
+title: "Benchmarking nf-core/taxprofiler resource usage"
+author: "James Fellows Yates"
+format: html
+---
+
+## Introduction
+
+This document summarises the resource usage of the nf-core/taxprofiler 'benchmarking' runs.
+
+It aims to give approximate guidance on the expected computing requirements for different sized input sequencing data files of real sequencing libraries, when profiled with differently sized reference databases of 1 thousand, 2 thousand, 5 thousand, 10 thousand, 20 thousand, and 29,807 complete reference genomes, as well as tool specific databases (i.e. profilers that do not allow database customisation).
+
+We compare resource usage compared between Illumina short-read and Oxford Nanopore Technology long-read datasets.
+
+For the Illumina data, this was a single palaeofaeces ancient DNA sample where the same sample was sequenced at the following depths:
+
+  - `_sma` shallow sequencing depth library at 20 million reads
+  - `_med` middle-sequencing depth at 100 million
+  - `_large` deep sequencing depth at 200 million reads
+
+Raw data was gathered through:
+
+- Nextflow's own resource reporting reports `pipeline_into/` in each results directory
+
+## Set up
+
+```{r}
+library(dplyr) ## general data processing
+library(readr) ## file reading/writing
+library(ggplot2) ## for plotting
+library(scales) ## for better memory unit plotting
+library(purrr) ## for mapping operations
+library(stringr) ## for string operations
+library(tidyr) ## for additional column operations
+library(patchwork) ## for plot joining
+sessionInfo()
+```
+## Illumina
+
+### Compute resource usage
+
+We can plot this using the Nextflow's own `pipeline_info` resource reports the amount of memory each classifer required for profiling the three types of data.
+
+```{r}
+## Load all trace files
+data_tracefiles_raw <- list.files('resource_tracking/taxprofiler_illumina', full.names = TRUE, pattern = 'execution_trace_*.', recursive = TRUE) |> 
+  read_tsv(id = "file_name")
+
+## Clean up, including dropping duplicated rows due to cached tasks from `-resume`  runs, dropping non-building processes
+data_tracefiles_clean <- data_tracefiles_raw |> 
+  filter(status == 'COMPLETED', !str_detect(name, 'MULTIQC|.*PREPROCESSING.*|.*SHORTREAD_HOSTREMOVAL.*|.*SHORTREAD_COMPLEXITYFILTERING.*|.*NONPAREIL.*|.*FASTQC.*|.*STANDARDISATION_PROFILES.*|.*VISUALIZATION.*|.*KREPORT.*|.*GANON_REPORT.*|.*KAIJU2TABLE.*|.*SYLPHTAX_TAXPROF.*')) |> 
+  rowwise() |> 
+  mutate(sample_name = str_split(name, '\\|') |> unlist() |> pluck(-1) |> str_remove('\\)')) |> 
+  mutate(
+      process = str_split(name, ':') |> unlist() |> pluck(-1) |> str_split(' ') |> unlist() |> pluck(1),
+      nr_genomes = str_split(name, '\\|') |> unlist() |> pluck(1) |> str_remove(".* \\(benchmark_") |> str_remove("-.*") |> as.numeric(),
+      sample_depth = case_when(
+          str_ends(sample_name, ".*_sma") ~ 2000000,
+          str_ends(sample_name, ".*_med") ~ 100000000,
+          str_ends(sample_name, ".*_lar") ~ 200000000,
+      )
+    ) |>
+  arrange(sample_depth) |> 
+  select(sample_depth, sample_name, nr_genomes, process, peak_vmem) |> 
+  unique() |> 
+  separate(peak_vmem, c('peak_vmem_value', 'peak_vmem_unit'), sep = ' ') |> 
+  mutate(peak_vmem_value_gb = ifelse(peak_vmem_unit == 'MB', as.numeric(peak_vmem_value) / 1000, as.numeric(peak_vmem_value) ))
+```
+
+We can then plot the memory usage of each process, with each size of input datasets.
+
+```{r}
+palette_custom_process = c(
+  "BRACKEN_BRACKEN" = "#a6cee3",
+  "CENTRIFUGE_CENTRIFUGE" = "#1f78b4",
+  "DIAMOND_BLASTX" = "#ccebc5",
+  "GANON_CLASSIFY" = "#33a02c",
+  "KAIJU_KAIJU" = "#fb9a99",
+  "KMCP_SEARCH" = "#e3211c",
+  "KMCP_PROFILE" = "#e3211c",
+  "KRAKEN2_KRAKEN2" = "#fdbf6f",
+  "KRAKENUNIQ_PRELOADEDKRAKENUNIQ" = "#ff7f00",
+  "METACACHE_QUERY" = "#cab2d6",
+  "METAPHLAN_METAPHLAN" = "grey",
+  "MOTUS_PROFILE" = "black",  
+  "SYLPH_PROFILE" = "#6a3d9a"
+)
+
+figure_memory_usage <- ggplot(data_tracefiles_clean |> filter(process != 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ'), aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
+  geom_point(size = 2) +
+  geom_line() +
+  scale_shape_manual(values = 1:13) +
+  #scale_colour_manual(values = palette_custom_process) +
+  ylab('Peak virtual memory (GB)') +
+  xlab('Size of database (nr. genomes, approx)') +
+  labs(
+    colour = 'Tool Process', 
+    shape = 'Tool Process'
+    ) +
+  theme_minimal() +
+  facet_wrap(~process)
+
+figure_memory_usage
+```
+To see more detail of the bulk of the tools, we can scale the Y axis
+
+```{r}
+figure_memory_usage_scaled <- ggplot(data_tracefiles_clean, aes(x = n_genomes / 1000, y = peak_vmem_value_gb, color = process, shape = process)) +
+  geom_point(size = 2) +
+  geom_line() +
+  scale_shape_manual(values = 1:16) +
+  scale_colour_manual(values = palette_custom_process) +
+  scale_y_log10(guide = "axis_logticks", labels = label_bytes(scale = 1000000000)) +
+  ylab('Peak virtual memory (log10)') +
+  xlab('Number of genomes (thousands)') +
+  labs(
+    colour = 'Tool Process', 
+    shape = 'Tool Process'
+    ) +
+  theme_minimal()
+
+figure_memory_usage_scaled
+```
+
+The decrease in memory usage in KMCP INDEX corresponds to a change in the auto-selected number of index files (6-7, up to 25).
+
+Or produce a second plot removing the outliers
+
+
+```{r fig.width=10}
+figure_memory_usage_filtered <- ggplot(data_tracefiles_clean |> filter(!process %in% c('CENTRIFUGE_BUILD', 'KRAKENUNIQ_BUILD')), aes(x = n_genomes / 1000, y = peak_vmem_value_gb, color = process, shape = process)) +
+  geom_point(size = 2) +
+  geom_line() +
+  scale_shape_manual(values = 1:16) +
+  scale_colour_manual(values = palette_custom_process) +
+  ylab('Peak virtual memory (GB)') +
+  xlab('Number of genomes (thousands)') +
+  labs(
+    colour = 'Tool Process', 
+    shape = 'Tool Process'
+    ) +
+  theme_minimal()
+
+figure_memory_usage + figure_memory_usage_filtered + plot_annotation(tag_levels = 'A')
+```
+
+### Combined Plots
+
+```{r fig.width=6, fig.height=8}
+final_resource_figure <- figure_memory_usage_scaled / figure_disk_usage_scaled + plot_annotation(tag_levels = 'A')
+final_resource_figure
+
+ggsave('fig3.png', final_resource_figure,width = 6, height = 8,  dpi = 300)
+```
