@@ -89,7 +89,7 @@ figure_disk_usage <- ggplot(data_disk_clean, aes(x = nr_genomes, y = directory_s
     colour = 'Tool', 
     shape = 'Tool'
     ) +
-  theme_minimal()
+  theme_bw()
 
 figure_disk_usage
 ```
@@ -111,7 +111,7 @@ figure_disk_usage_filtered <- ggplot(data_disk_clean |> filter(tool != 'krakenun
     colour = 'Tool', 
     shape = 'Tool'
     ) +
-  theme_minimal()
+  theme_bw()
 
 figure_disk_usage + figure_disk_usage_filtered + plot_annotation(tag_levels = 'A')
 ```
@@ -131,7 +131,7 @@ figure_disk_usage_scaled <- ggplot(data_disk_clean, aes(x = nr_genomes / 1000, y
     colour = 'Tool', 
     shape = 'Tool'
     ) +
-  theme_minimal()
+  theme_bw()
 
 figure_disk_usage_scaled
 ```
@@ -193,7 +193,7 @@ figure_memory_usage <- ggplot(data_tracefiles_clean, aes(x = n_genomes / 1000, y
     colour = 'Tool Process', 
     shape = 'Tool Process'
     ) +
-  theme_minimal()
+  theme_bw()
 
 figure_memory_usage
 ```
@@ -212,7 +212,7 @@ figure_memory_usage_scaled <- ggplot(data_tracefiles_clean, aes(x = n_genomes / 
     colour = 'Tool Process', 
     shape = 'Tool Process'
     ) +
-  theme_minimal()
+  theme_bw()
 
 figure_memory_usage_scaled
 ```
@@ -234,7 +234,7 @@ figure_memory_usage_filtered <- ggplot(data_tracefiles_clean |> filter(!process 
     colour = 'Tool Process', 
     shape = 'Tool Process'
     ) +
-  theme_minimal()
+  theme_bw()
 
 figure_memory_usage + figure_memory_usage_filtered + plot_annotation(tag_levels = 'A')
 ```
@@ -245,5 +245,5 @@ figure_memory_usage + figure_memory_usage_filtered + plot_annotation(tag_levels 
 final_resource_figure <- figure_memory_usage_scaled / figure_disk_usage_scaled + plot_annotation(tag_levels = 'A')
 final_resource_figure
 
-ggsave('fig3.png', final_resource_figure,width = 6, height = 8,  dpi = 300)
+ggsave('fig3-createtaxdb-resourceusage.png', final_resource_figure,width = 6, height = 8,  dpi = 300)
 ```

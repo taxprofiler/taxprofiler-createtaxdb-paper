@@ -5,6 +5,7 @@ ganon,benchmark_30000-ganon,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-p
 metacache,benchmark_30000-metacache,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_30000/metacache/
 kmcp,benchmark_30000-kmcp,;--no-amb-corr,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_30000/kmcp/benchmark_30000-kmcp-index
 kaiju,benchmark_30000-kaiju,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_30000/kaiju/
+kraken2,benchmark_30000-kraken2,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_5000/kraken2/benchmark_5000-kraken2
 bracken,benchmark_30000-bracken,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_30000/bracken/benchmark_30000-bracken
 centrifuge,benchmark_30000-centrifuge,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_30000/centrifuge/benchmark_30000-centrifuge
 krakenuniq,benchmark_30000-krakenuniq,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_30000/krakenuniq/benchmark_30000-krakenuniq
