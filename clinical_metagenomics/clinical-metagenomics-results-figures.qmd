@@ -163,8 +163,103 @@ theme_bw() +
 ) +
 
 coord_cartesian(xlim = c(0, 100))
+```
+
+### Figure 6
+
+```{r}
+target_viruses_df <- read.csv(text = "
+sample,Classification tool,virus_reads,total_reads
+PI2-20,Kraken2,3467333,69281140
+PI2-20,DIAMOND,2250135,69281140
+InfB-22,Kraken2,7312,74819268
+InfB-22,DIAMOND,8710,74819268
+InfA-30,Kraken2,1,63606148
+InfA-30,DIAMOND,1,63606148
+Met-32,Kraken2,560,90524074
+Met-32,DIAMOND,426,90524074
+RSA-24,Kraken2,4794074,60594914
+RSA-24,DIAMOND,1796895,60594914
+RSV-25,Kraken2,668892,87510238
+RSV-25,DIAMOND,287342,87510238
+")
+
+options(scipen = 999)
+target_viruses_df$RPM <- (target_viruses_df$virus_reads / target_viruses_df$total_reads) * 1000000
+target_viruses_df$RPM <- format(target_viruses_df$RPM, big.mark = ",", scientific = FALSE)
+target_viruses_df$RPM <- as.numeric(gsub(",", "", target_viruses_df$RPM))
+target_viruses_df$logRPM <- log10(target_viruses_df$RPM + 1)
+
+target_viruses_df <- target_viruses_df %>%
+    mutate(virus = recode(sample,
+            "PI2-20" = "Human orthorubulavirus 2",
+            "InfB-22" = "Influenza B virus",
+            "InfA-30" = "Influenza A virus",
+            "Met-32" = "Human metapneumovirus",
+            "RSA-24" = "Human respiratory syncytial virus",
+            "RSV-25" = "Human respiratory syncytial virus"
+    ),
+
+    label = paste(sample, virus, sep = "\n"),
+
+    label = factor(label,levels = c(
+            "PI2-20\nHuman orthorubulavirus 2",
+            "InfB-22\nInfluenza B virus",
+            "InfA-30\nInfluenza A virus",
+            "Met-32\nHuman metapneumovirus",
+            "RSA-24\nHuman respiratory syncytial virus",
+            "RSV-25\nHuman respiratory syncytial virus"
+        )
+    )
+)
+
+target_viruses_df$Classification.tool <- factor(target_viruses_df$Classification.tool, levels = c("Kraken2","DIAMOND")
+)
+
+
+target_viruses_df$label <- factor(
+    target_viruses_df$label,
+    levels = rev(unique(target_viruses_df$label))
+)
+
+ggplot(target_viruses_df, aes(x = label, y = logRPM, fill = Classification.tool)) +
+
+    geom_col(position = position_dodge2(width = 0.8, reverse=TRUE), width = 0.7) +
+    coord_flip() +
+    scale_fill_manual(values = c(
+        "Kraken2" = "#fdbf6f",
+        "DIAMOND" = "#ccebc5"
+)) +
+
+    labs(
+        x = "Target virus",
+        y = expression(log[10]*"(RPM + 1)"),
+    fill = "Classification tool"
+    ) +
+
+    theme_bw() +
+    theme(
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+
+        axis.title.x = element_text(
+        size = 15,
+        margin = margin(t = 10)
+    ),
+
+        axis.title.y = element_text(
+        size = 15,
+        margin = margin(r = 10)
+    ),
+
+    legend.title = element_text(size = 15),
+    legend.text = element_text(size = 12),
+    strip.text = element_text(size = 13)
+
+)
 
 ```
+
 ## Figures for Nanopore-sequenced clinical metagenomics data
 
 ### Metacache
