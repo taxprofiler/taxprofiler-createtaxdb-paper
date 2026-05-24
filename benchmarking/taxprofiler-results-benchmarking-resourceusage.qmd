@@ -65,7 +65,10 @@ processes_to_remove_illumina = c(
 data_tracefiles_clean_illumina <- data_tracefiles_raw_illumina |> 
   filter(status == 'COMPLETED', !str_detect(name, paste0(processes_to_remove_illumina, collapse = '|'))) |> 
   rowwise() |> 
-  mutate(sample_name = str_split(name, '\\|') |> unlist() |> pluck(-1) |> str_remove('\\)')) |> 
+  mutate(
+    sample_name = str_split(name, '\\|') |> unlist() |> pluck(-1) |> str_remove('\\)'),
+    sample_name = if_else(sample_name == 1, 'All samples', sample_name)
+    ) |> 
   mutate(
       process = str_split(name, ':') |> unlist() |> pluck(-1) |> str_split(' ') |> unlist() |> pluck(1),
       nr_genomes = str_split(name, '\\|') |> unlist() |> pluck(1) |> str_remove(".* \\(benchmark_") |> str_remove("-.*") |> as.numeric(),
@@ -83,29 +86,14 @@ data_tracefiles_clean_illumina <- data_tracefiles_raw_illumina |>
 ```
 
 We can then plot the memory usage of each process, with each size of input datasets.
+We need to separate MetaPhlAn and mOTUs as they have fixed databases (i.e. don't change in size).
 
 ```{r}
-palette_custom_process_illumina = c(
-  "BRACKEN_BRACKEN" = "#a6cee3",
-  "CENTRIFUGE_CENTRIFUGE" = "#1f78b4",
-  "DIAMOND_BLASTX" = "#ccebc5",
-  "GANON_CLASSIFY" = "#33a02c",
-  "KAIJU_KAIJU" = "#fb9a99",
-  "KMCP_SEARCH" = "#e3211c",
-  "KMCP_PROFILE" = "#e3211c",
-  "KRAKEN2_KRAKEN2" = "#fdbf6f",
-  "KRAKENUNIQ_PRELOADEDKRAKENUNIQ" = "#ff7f00",
-  "METACACHE_QUERY" = "#cab2d6",
-  "METAPHLAN_METAPHLAN" = "grey",
-  "MOTUS_PROFILE" = "black",  
-  "SYLPH_PROFILE" = "#6a3d9a"
-)
-
-figure_memory_usage_illumina <- ggplot(data_tracefiles_clean_illumina |> filter(process != 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ'), aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
+figure_memory_usage_illumina_customdb <- ggplot(data_tracefiles_clean_illumina |> filter(!process %in% c("METAPHLAN_METAPHLAN", "MOTUS_PROFILE")), 
+                                                aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
   geom_point(size = 2) +
   geom_line() +
   scale_shape_manual(values = 1:13) +
-  #scale_colour_manual(values = palette_custom_process_illumina) +
   ylab('Peak virtual memory (GB)') +
   xlab('Size of database (nr. genomes, approx)') +
   labs(
@@ -115,12 +103,46 @@ figure_memory_usage_illumina <- ggplot(data_tracefiles_clean_illumina |> filter(
   theme_bw() +
   facet_wrap(~process)
 
-figure_memory_usage_illumina
+figure_memory_usage_illumina_fixed_db <-  ggplot(data_tracefiles_clean_illumina |> filter(process %in% c("METAPHLAN_METAPHLAN", "MOTUS_PROFILE")), 
+                                                aes(x = sample_name, y = peak_vmem_value_gb, fill = sample_name)) +
+  geom_col() +
+  scale_shape_manual(values = 1:13) +
+  ylab('Peak virtual memory (GB)') +
+  xlab('Sample') +
+  labs(
+    colour = 'Tool Process', 
+    shape = 'Tool Process'
+    ) +
+  theme_bw() +
+  facet_wrap(~process)
+
+figure_memory_usage_illumina_customdb
+figure_memory_usage_illumina_fixed_db
 ```
-To see more detail of the bulk of the tools, we can scale the Y axis
+
+However KRAKENUNIQ is a massive outlier, so we can filter this out to get a better comparison with the other tools.
 
 ```{r}
-figure_memory_usage_scaled_illumina <- ggplot(data_tracefiles_clean_illumina |> filter(process != 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ'), aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
+figure_memory_usage_illumina_noku_customdb <- ggplot(data_tracefiles_clean_illumina |> filter(!process %in% c("METAPHLAN_METAPHLAN", "MOTUS_PROFILE", "KRAKENUNIQ_PRELOADEDKRAKENUNIQ")), 
+                                                aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
+  geom_point(size = 2) +
+  geom_line() +
+  scale_shape_manual(values = 1:13) +
+  ylab('Peak virtual memory (GB)') +
+  xlab('Size of database (nr. genomes, approx)') +
+  labs(
+    colour = 'Tool Process', 
+    shape = 'Tool Process'
+    ) +
+  theme_bw() +
+  facet_wrap(~process)
+
+figure_memory_usage_illumina_noku_customdb
+```
+To have all tools in one run, but see more detail of the bulk of the tools, we can scale the Y axis.
+
+```{r fig.height= 8,fig.width=8}
+figure_memory_usage_scaled_illumina <- ggplot(data_tracefiles_clean_illumina |> filter(!process %in% c("METAPHLAN_METAPHLAN", "MOTUS_PROFILE")), aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
   geom_point(size = 2) +
   geom_line() +
   scale_shape_manual(values = 1:13) +
@@ -189,29 +211,15 @@ data_tracefiles_clean_ont <- data_tracefiles_raw_ont |>
 ```
 
 We can then plot the memory usage of each process, with each size of input datasets.
+We need to separate mOTUs and Melon as they have fixed databases (i.e. don't change in size).
+Note that Bracken, ganon, and KMCP, are not represented as they do not explicitly support long-read data, and MetaPhlAn has been excluded due to a known problem in v4.1 where BowTie2 requires an inordinate amount of resources.
 
 ```{r}
-palette_custom_process_ont = c(
-  "BRACKEN_BRACKEN" = "#a6cee3",
-  "CENTRIFUGE_CENTRIFUGE" = "#1f78b4",
-  "DIAMOND_BLASTX" = "#ccebc5",
-  "GANON_CLASSIFY" = "#33a02c",
-  "KAIJU_KAIJU" = "#fb9a99",
-  "KMCP_SEARCH" = "#e3211c",
-  "KMCP_PROFILE" = "#e3211c",
-  "KRAKEN2_KRAKEN2" = "#fdbf6f",
-  "KRAKENUNIQ_PRELOADEDKRAKENUNIQ" = "#ff7f00",
-  "METACACHE_QUERY" = "#cab2d6",
-  "METAPHLAN_METAPHLAN" = "grey",
-  "MOTUS_PROFILE" = "black",  
-  "SYLPH_PROFILE" = "#6a3d9a"
-)
-
-figure_memory_usage_ont <- ggplot(data_tracefiles_clean_ont |> filter(process != 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ'), aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
+figure_memory_usage_ont_customdb <- ggplot(data_tracefiles_clean_ont |> filter(!process %in% c("MELON", "MOTUS_PROFILE")), 
+                                                aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
   geom_point(size = 2) +
   geom_line() +
   scale_shape_manual(values = 1:13) +
-  #scale_colour_manual(values = palette_custom_process_ont) +
   ylab('Peak virtual memory (GB)') +
   xlab('Size of database (nr. genomes, approx)') +
   labs(
@@ -221,12 +229,46 @@ figure_memory_usage_ont <- ggplot(data_tracefiles_clean_ont |> filter(process !=
   theme_bw() +
   facet_wrap(~process)
 
-figure_memory_usage_ont
+figure_memory_usage_ont_fixed_db <-  ggplot(data_tracefiles_clean_ont |> filter(process %in% c("MELON", "MOTUS_PROFILE")), 
+                                                aes(x = sample_name, y = peak_vmem_value_gb, fill = sample_name)) +
+  geom_col() +
+  scale_shape_manual(values = 1:13) +
+  ylab('Peak virtual memory (GB)') +
+  xlab('Sample') +
+  labs(
+    colour = 'Tool Process', 
+    shape = 'Tool Process'
+    ) +
+  theme_bw() +
+  facet_wrap(~process)
+
+figure_memory_usage_ont_customdb
+figure_memory_usage_ont_fixed_db
 ```
-To see more detail of the bulk of the tools, we can scale the Y axis
+
+However KRAKENUNIQ is a massive outlier, so we can filter this out to get a better comparison with the other tools.
 
 ```{r}
-figure_memory_usage_scaled_ont <- ggplot(data_tracefiles_clean_ont |> filter(process != 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ'), aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
+figure_memory_usage_ont_noku_customdb <- ggplot(data_tracefiles_clean_ont |> filter(!process %in% c("MELON", "MOTUS_PROFILE", "KRAKENUNIQ_PRELOADEDKRAKENUNIQ")), 
+                                                aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
+  geom_point(size = 2) +
+  geom_line() +
+  scale_shape_manual(values = 1:13) +
+  ylab('Peak virtual memory (GB)') +
+  xlab('Size of database (nr. genomes, approx)') +
+  labs(
+    colour = 'Tool Process', 
+    shape = 'Tool Process'
+    ) +
+  theme_bw() +
+  facet_wrap(~process)
+
+figure_memory_usage_ont_noku_customdb
+```
+To have all tools in one run, but see more detail of the bulk of the tools, we can scale the Y axis.
+
+```{r fig.height= 8,fig.width=8}
+figure_memory_usage_scaled_ont <- ggplot(data_tracefiles_clean_ont |> filter(!process %in% c("MELON", "MOTUS_PROFILE")), aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
   geom_point(size = 2) +
   geom_line() +
   scale_shape_manual(values = 1:13) +
@@ -248,7 +290,7 @@ figure_memory_usage_scaled_ont
 <!-- TODO TO UPDATE --> 
 
 ```{r fig.width=6, fig.height=8}
-final_resource_figure_illumina <- figure_memory_usage_scaled_illumina / figure_disk_usage_scaled_illumina + plot_annotation(tag_levels = 'A')
+final_resource_figure_illumina <- figure_memory_usage_illumina_scaled_customdb |  figure_memory_usage_illumina_customdb + plot_annotation(tag_levels = 'A')
 final_resource_figure_illumina
 
 ggsave('fig4-taxprofiler-resourceusage.png', final_resource_figure_illumina, width = 6, height = 8,  dpi = 300)
