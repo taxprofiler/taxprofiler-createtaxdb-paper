@@ -4,6 +4,261 @@ author: "Sofia Stamouli"
 format: html
 ---
 
+## Figures for Illumina-sequenced clinical metagenomics data
+
+### Figure 5
+
+We will use the result files ending in "*report.txt" from the kraken2 folder and the taxpasta output file for DIAMOND. Make sure you are in the correct directory before running the following code.
+
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+
+setwd("path/to/kraken2")
+
+sample_order <- c("PI2-20", "InfB-22", "InfA-30", "Met-32", "RSA-24", "RSV-25")
+
+# Create a mapping of sample names to their corresponding column names
+sample_diamond_map <- c(
+    "InfA-30_diamond.diamond" = "InfA-30",
+    "PI2-20_diamond.diamond"  = "PI2-20",
+    "InfA-33_diamond.diamond" = "Met-32",
+    "InfB-22_diamond.diamond" = "InfB-22",
+    "RSA-24_diamond.diamond"  = "RSA-24",
+    "RSV-25_diamond.diamond"  = "RSV-25"
+)
+
+#Function to read and process the kraken2 report files
+
+read_kraken2_report <- function(file, sample_name) {
+    kraken2_df <- read.table(file, sep = "\t", header = FALSE,
+        col.names = c("percent", "reads_clade", "reads_taxon","rank", "taxid", "name"),
+                    fill = TRUE, quote = "")
+    kraken2_df$name   <- trimws(kraken2_df$name)
+    kraken2_df$sample <- sample_name
+    kraken2_df$tool   <- "Kraken2"
+    return(df)
+}
+
+kraken2_files <- list("PI2-20"  = "/path/to/PI2-20_k2_pluspf.kraken2.kraken2.report.txt",
+                    "InfB-22" = "/path/to/InfB-22_k2_pluspf.kraken2.kraken2.report.txt",
+                    "InfA-30" = "/path/to/InfA-30_k2_pluspf.kraken2.kraken2.report.txt",
+                    "Met-32"  = "/path/to/InfA-33_k2_pluspf.kraken2.kraken2.report.txt",
+                    "RSA-24"  = "/path/to/RSA-24_k2_pluspf.kraken2.kraken2.report.txt",
+                    "RSV-25"  = "/path/to/RSV-25_k2_pluspf.kraken2.kraken2.report.txt"
+)
+
+# We will apply the function to each file and combine the results into a single data frame
+kraken2_all_files <- bind_rows(mapply(read_kraken2_report,kraken2_files, names(kraken2_files), SIMPLIFY = FALSE))
+
+# Extract taxonomic groups and calculate percentages for plotting
+kraken2_plot <- kraken2_all_files %>%
+    filter(name %in% c("Viruses", "Bacteria", "Eukaryota", "Archaea", "unclassified")) %>%
+    mutate(
+    group = case_when(
+        name == "unclassified" ~ "Unclassified",
+        TRUE ~ name
+    ),
+    tool = "Kraken2"
+    ) %>%
+select(sample, tool, group, percent)
+
+#Adjust percentages to sum to 100% for each sample
+kraken2_plot <- kraken2_plot %>%
+    group_by(sample) %>%
+    mutate(percent = percent / sum(percent) * 100) %>%
+    ungroup()
+
+#We now created the dataframe for Kraken2 that is going to be used for plotting. We will now do the same for DIAMOND.
+
+#Make sure you are in the correct directory before running the following code.
+
+setwd("path/to/taxpasta")
+diamond_files <- read.table("path/to/taxpasta/diamond_diamond.tsv", sep = "\t", header = TRUE, check.names = FALSE)
+
+
+# Assign each row to a taxonomic group
+diamond_assigned <- diamond_files %>%
+    mutate(
+        group = case_when(
+        taxonomy_id == 0~ "Unclassified",
+        grepl("^Viruses", lineage) | name == "Viruses"~ "Viruses",
+        grepl("^cellular organisms;Archaea", lineage) | name == "Archaea"~ "Archaea",
+        grepl("^cellular organisms;Bacteria", lineage) | name == "Bacteria"~ "Bacteria",
+        grepl("^cellular organisms;Eukaryota", lineage) | name == "Eukaryota"~ "Eukaryota",
+        # cellular organisms or rows that don't fit above
+        TRUE~ "Other"
+        )
+)
+
+sample_diamond_cols <- names(sample_diamond_map)
+
+# Adjust the df to sum reads per sample per kingdom
+diamond_df <- diamond_assigned %>%
+    select(group, all_of(sample_diamond_cols)) %>%
+    pivot_longer(all_of(sample_diamond_cols), names_to = "col_name", values_to = "reads") %>%
+    mutate(sample = sample_diamond_map[col_name]) %>%
+    group_by(sample, group) %>%
+    summarise(reads = sum(reads), .groups = "drop")
+
+# Compute percentages (total = sum of ALL reads including Other)
+diamond_percentages <- diamond_long %>%
+    filter(group != "Other") %>%
+    group_by(sample) %>%
+    mutate(percent = reads / sum(reads) * 100) %>%
+    ungroup() %>%
+    mutate(tool = "Diamond") %>%
+    select(sample, tool, group, percent)
+
+# Rename percent column and round
+diamond_plot <- diamond_percentages %>%
+    rename(percent = percent) %>%
+    mutate(percent = round(percent, 2)) %>%
+    select(sample, tool, group, percent)
+
+# Combine Kraken2 and Diamond data for plotting
+
+taxonomic_composition_illumina <- bind_rows(kraken2_plot, diamond_plot) %>%
+    mutate(
+        group  = factor(group, levels = c("Viruses", "Bacteria","Eukaryota", "Archaea", "Unclassified")),
+        sample = factor(sample, levels = rev(sample_order)),
+        tool   = factor(tool, levels = c("Kraken2", "Diamond"))
+)
+
+ggplot(taxonomic_composition_illumina,aes(y = sample,x = percent,fill = group)) +
+geom_bar(stat = "identity", position = "stack") +
+facet_wrap(~ tool,ncol = 2,labeller = labeller(tool = c(Diamond = "DIAMOND"))) +
+scale_fill_manual(name   = "Taxonomic groups",
+        values = c(
+        "Viruses"      = "#e34a33",
+        "Bacteria"     = "#67a9cf",
+        "Eukaryota"    = "#7fbf7b",
+        "Archaea"      = "#8491B4",
+        "Unclassified" = "#bdbdbd"
+    )
+) +
+
+labs( x = "Percentage of reads (%)",y = "Sample names") +
+theme_bw() +
+    theme(
+
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+
+        axis.title.x = element_text(
+        size = 15,
+        margin = margin(t = 10)
+    ),
+
+        axis.title.y = element_text(
+        size = 15,
+        margin = margin(r = 10)
+    ),
+
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 12),
+        strip.text = element_text(size = 13)
+) +
+
+coord_cartesian(xlim = c(0, 100))
+```
+
+### Figure 6
+
+```{r}
+target_viruses_df <- read.csv(text = "
+sample,Classification tool,virus_reads,total_reads
+PI2-20,Kraken2,3467333,69281140
+PI2-20,DIAMOND,2250135,69281140
+InfB-22,Kraken2,7312,74819268
+InfB-22,DIAMOND,8710,74819268
+InfA-30,Kraken2,1,63606148
+InfA-30,DIAMOND,1,63606148
+Met-32,Kraken2,560,90524074
+Met-32,DIAMOND,426,90524074
+RSA-24,Kraken2,4794074,60594914
+RSA-24,DIAMOND,1796895,60594914
+RSV-25,Kraken2,668892,87510238
+RSV-25,DIAMOND,287342,87510238
+")
+
+options(scipen = 999)
+target_viruses_df$RPM <- (target_viruses_df$virus_reads / target_viruses_df$total_reads) * 1000000
+target_viruses_df$RPM <- format(target_viruses_df$RPM, big.mark = ",", scientific = FALSE)
+target_viruses_df$RPM <- as.numeric(gsub(",", "", target_viruses_df$RPM))
+target_viruses_df$logRPM <- log10(target_viruses_df$RPM + 1)
+
+target_viruses_df <- target_viruses_df %>%
+    mutate(virus = recode(sample,
+            "PI2-20" = "Human orthorubulavirus 2",
+            "InfB-22" = "Influenza B virus",
+            "InfA-30" = "Influenza A virus",
+            "Met-32" = "Human metapneumovirus",
+            "RSA-24" = "Human respiratory syncytial virus",
+            "RSV-25" = "Human respiratory syncytial virus"
+    ),
+
+    label = paste(sample, virus, sep = "\n"),
+
+    label = factor(label,levels = c(
+            "PI2-20\nHuman orthorubulavirus 2",
+            "InfB-22\nInfluenza B virus",
+            "InfA-30\nInfluenza A virus",
+            "Met-32\nHuman metapneumovirus",
+            "RSA-24\nHuman respiratory syncytial virus",
+            "RSV-25\nHuman respiratory syncytial virus"
+        )
+    )
+)
+
+target_viruses_df$Classification.tool <- factor(target_viruses_df$Classification.tool, levels = c("Kraken2","DIAMOND")
+)
+
+
+target_viruses_df$label <- factor(
+    target_viruses_df$label,
+    levels = rev(unique(target_viruses_df$label))
+)
+
+ggplot(target_viruses_df, aes(x = label, y = logRPM, fill = Classification.tool)) +
+
+    geom_col(position = position_dodge2(width = 0.8, reverse=TRUE), width = 0.7) +
+    coord_flip() +
+    scale_fill_manual(values = c(
+        "Kraken2" = "#fdbf6f",
+        "DIAMOND" = "#ccebc5"
+)) +
+
+    labs(
+        x = "Target virus",
+        y = expression(log[10]*"(RPM + 1)"),
+    fill = "Classification tool"
+    ) +
+
+    theme_bw() +
+    theme(
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+
+        axis.title.x = element_text(
+        size = 15,
+        margin = margin(t = 10)
+    ),
+
+        axis.title.y = element_text(
+        size = 15,
+        margin = margin(r = 10)
+    ),
+
+    legend.title = element_text(size = 15),
+    legend.text = element_text(size = 12),
+    strip.text = element_text(size = 13)
+
+)
+
+```
 
 ## Figures for Nanopore-sequenced clinical metagenomics data
 
@@ -53,4 +308,184 @@ for file in *_lineage.txt; do
     }' "$file" > "$outfile"
 
 done
+```
+
+### Figure 7
+
+For the Figure 7, we will basically use the same code as we used for Figure 5, and we will also add MetaCache to the plot.
+
+Make sure you are in the correct directory before running the following code. We will start with the Kraken2 classification reports.
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+
+sample_order_nanopore <- c("PI2-20", "InfB-22", "InfA-30", "Met-32", "RSA-24", "RSV-25")
+
+sample_diamond_map_nanopore <- c(
+    "barcode35_barcode35_diamond.diamond" = "InfA-30",
+    "barcode33_barcode33_diamond.diamond"  = "PI2-20",
+    "barcode36_barcode36_diamond.diamond" = "Met-32",
+    "barcode34_barcode34_diamond.diamond" = "InfB-22",
+    "barcode37_barcode37_diamond.diamond"  = "RSA-24",
+    "barcode38_barcode38_diamond.diamond"  = "RSV-25"
+)
+
+sample_diamond_cols_nanopore <- names(sample_diamond_map_nanopore)
+
+sample_diamond_cols_nanopore <- names(sample_diamond_map_nanopore)
+
+sample_metacache_map_nanopore <- c(
+    "barcode35_barcode35_metacache_lineage_summary.txt" = "InfA-30",
+    "barcode33_barcode33_metacache_lineage_summary.txt" = "PI2-20",
+    "barcode36_barcode36_metacache_lineage_summary.txt" = "Met-32",
+    "barcode34_barcode34_metacache_lineage_summary.txt" = "InfB-22",
+    "barcode37_barcode37_metacache_lineage_summary.txt" = "RSA-24",
+    "barcode38_barcode38_metacache_lineage_summary.txt" = "RSV-25"
+)
+
+sample_metacache_cols_nanopore <- names(sample_metacache_map_nanopore)
+
+## We will start with the Kraken2 classification reports.
+
+kraken2_files_nanopore <- list("PI2-20"  = "/path/to/barcode33_barcode33_k2_pluspf.kraken2.kraken2.report.txt",
+                            "InfB-22" = "/path/to/barcode34_barcode34_k2_pluspf.kraken2.kraken2.report.txt",
+                            "InfA-30" = "/path/to/barcode35_barcode35_k2_pluspf.kraken2.kraken2.report.txt",
+                            "Met-32"  = "/path/to/barcode36_barcode36_k2_pluspf.kraken2.kraken2.report.txt",
+                            "RSA-24"  = "/path/to/barcode37_barcode37_k2_pluspf.kraken2.kraken2.report.txt",
+                            "RSV-25"  = "/path/to/barcode38_barcode38_k2_pluspf.kraken2.kraken2.report.txt"
+)
+
+kraken2_all_files_nanopore <- bind_rows(mapply(read_kraken2_report,
+                                kraken2_files_nanopore, names(kraken2_files_nanopore), SIMPLIFY = FALSE))
+
+kraken2_plot_nanopore <- kraken2_all_files_nanopore %>%
+    filter(name %in% c("Viruses", "Bacteria", "Eukaryota", "Archaea", "unclassified")) %>%
+    mutate(group = case_when( name == "unclassified" ~ "Unclassified",TRUE ~ name),tool = "Kraken2"
+    ) %>%
+select(sample, tool, group, percent)
+
+kraken2_plot_nanopore <- kraken2_plot_nanopore %>%
+    group_by(sample) %>%
+    mutate(percent = percent / sum(percent) * 100) %>%
+    ungroup()
+
+#We will do the same as for Illumina for DIAMOND.
+
+diamond_files_nanopore <- read.table("/path/to/diamond_diamond_nanopore.tsv", sep = "\t", header = TRUE, check.names = FALSE)
+
+
+diamond_assigned_nanopore <- diamond_files_nanopore %>%
+    mutate(
+    group = case_when(
+        taxonomy_id == 0~ "Unclassified",
+        grepl("^Viruses", lineage) | name == "Viruses"~ "Viruses",
+        grepl("^cellular organisms;Archaea", lineage) | name == "Archaea"~ "Archaea",
+        grepl("^cellular organisms;Bacteria", lineage) | name == "Bacteria" ~ "Bacteria",
+        grepl("^cellular organisms;Eukaryota", lineage) | name == "Eukaryota"~ "Eukaryota",
+        TRUE~ "Other"
+    )
+)
+
+
+# Pivot to long, sum reads per sample per kingdom
+diamond_df_nanopore <- diamond_assigned_nanopore %>%
+    select(group, all_of(sample_diamond_cols_nanopore)) %>%
+    pivot_longer(all_of(sample_diamond_cols_nanopore), names_to = "col_name", values_to = "reads") %>%
+    mutate(sample = sample_diamond_map_nanopore[col_name]) %>%
+    group_by(sample, group) %>%
+    summarise(reads = sum(reads), .groups = "drop")
+
+diamond_percentages_nanopore <- diamond_df_nanopore %>%
+    filter(group != "Other") %>%
+    group_by(sample) %>%
+    mutate(percent = reads / sum(reads) * 100) %>%
+    ungroup() %>%
+    mutate(tool = "Diamond") %>%
+    select(sample, tool, group, percent)
+
+# Rename percent column and round
+diamond_plot_nanopore <- diamond_percentages_nanopore %>%
+    rename(percent = percent) %>%
+    mutate(percent = round(percent, 2)) %>%
+    select(sample, tool, group, percent)
+
+## Now we will process the MetaCache results. Make sure you are in the correct directory with the preprocessed MetaCache results before running the following code.
+
+metacache_files <- list.files(pattern = "_metacache_lineage_summary.txt$")
+
+metacache_plot <- map_dfr(metacache_files, function(f) { metacache_df <- read.table(
+    f,
+    sep = "\t",
+    header = FALSE,
+    fill = TRUE,
+    stringsAsFactors = FALSE
+)
+
+colnames(metacache_df) <- c("group", "count", "percent")
+
+metacache_df %>%
+    filter(group != "Total:") %>%
+    mutate(
+        group = gsub(":", "", group),
+        percent = as.numeric(gsub("[()%]", "", percent)),
+        sample = sample_metacache_map_nanopore[f],
+        tool = "MetaCache"
+        ) %>%
+select(sample, tool, group, percent)
+
+#We will now combine the three dataframes for plotting.
+
+plot_data_nanopore <- bind_rows(kraken2_plot_nanopore, diamond_plot_nanopore, metacache_plot) %>%
+    mutate(
+        group  = factor(group, levels = c("Viruses", "Bacteria","Eukaryota", "Archaea", "Unclassified")),
+        sample = factor(sample, levels = rev(sample_order_nanopore)),
+        tool   = factor(tool, levels = c("Kraken2", "Diamond", "MetaCache"))
+)
+})
+
+ggplot(plot_data_nanopore, aes(y = sample, x = percent,fill = group)) +
+    geom_bar(stat = "identity", position = "stack") +
+    facet_wrap(~ tool, nrow = 1, labeller = labeller(tool = c(Diamond = "DIAMOND"))) +
+    scale_fill_manual(
+        name   = "Taxonomic groups",
+        values = c(
+        "Viruses"      = "#e34a33",
+        "Bacteria"     = "#67a9cf",
+        "Eukaryota"    = "#7fbf7b",
+        "Archaea"      = "#8491B4",
+        "Unclassified" = "#bdbdbd"
+    )
+) +
+
+labs(
+    x = "Percentage of reads (%)",
+    y = "Sample names"
+) +
+
+theme_bw() +
+    theme(
+
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+
+        axis.title.x = element_text(
+        size = 15,
+        margin = margin(t = 10)
+    ),
+
+        axis.title.y = element_text(
+        size = 15,
+        margin = margin(r = 10)
+    ),
+
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 12),
+        strip.text = element_text(size = 13)
+) +
+
+coord_cartesian(xlim = c(0, 100))
+
+
 ```
