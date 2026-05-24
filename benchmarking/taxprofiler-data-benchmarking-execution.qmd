@@ -398,6 +398,135 @@ done
 
 We do not run MetaPhlan due to a known problem with <= v4.1 (the version in nf-core/taxprofiler) and long read data, where BowTie2 would require too much memory.
 
+### 30k
+
+```{bash}
+#| eval: false
+nextflow run nf-core/taxprofiler \
+ -r 2.0.0 \
+ --input /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/samplesheets/taxprofiler-samplesheet_ont_raven.csv \
+ --databases /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/samplesheets/taxprofiler-databases_raven30000.csv \
+ -profile mpcdf,raven \
+ -name txp_benchmark_ont_30000 \
+ --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/results_ont_30000/ \
+ --perform_longread_qc \
+ --perform_longread_hostremoval \
+ --hostremoval_reference /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/human-t2t-hla.fa.gz \
+ --longread_hostremoval_index /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/human-t2t-hla.mmi \
+ --run_bracken \
+ --run_centrifuge \
+ --run_diamond \
+ --run_ganon \
+ --run_kaiju \
+ --run_kmcp \
+ --run_kraken2 \
+ --run_krakenuniq \
+ --run_melon \
+ --run_metacache \
+ --run_motus \
+ --run_sylph \
+ --run_profile_standardisation \
+ --run_krona \
+ --taxpasta_taxonomy_dir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/ \
+ --sylph_taxonomy /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
+ -c custom_small_ont.config
+```
+
+The config: `custom_small_ont.config` contained:
+
+```{groovy}
+#| eval: false
+process {
+	withName: 'FASTP_PAIRED' {
+		cpus   = 24
+		memory = '90.GB'
+	}
+  withName: 'PORECHOP_ABI' {
+          cpus = 24
+          memory = '110.GB'
+  }
+  withName: 'NANOQ' {
+          cpus = 24
+          memory = '110.GB'
+  }
+	withName: 'SAMTOOLS_STATS' {
+		memory = '32.GB'
+	}
+	withName: 'NONPAREIL_NONPAREIL' {
+		ext.args = "-k 15"
+	} 
+  withName: 'KAIJU_KAIJU' {
+          memory = '50.GB'
+          cpus   = '30'
+  }
+  withName: 'GANON_CLASSIFY' {
+          memory = '15.GB'
+          cpus   = '30'
+  }
+	withName: 'DIAMOND_BLASTX' {
+		memory = '50.GB'
+		cpus = '30'
+	}
+	withName: 'KMCP_PROFILE' {
+		memory = '50.GB'
+		cpus = '30'
+		time = '24.h'
+	}
+	withName: 'KMCP_SEARCH' {
+		memory = '50.GB'
+		cpus = '30'
+	}
+  withName: 'KRAKEN2_KRAKEN2'{
+          memory = '100.GB'
+          cpus   = '30'
+  }
+  withName: 'BRACKEN_BRACKEN'{
+          memory = '10.GB'
+          cpus   = '30'
+  }
+  withName: 'METACACHE_QUERY' {
+          memory = '100.GB'
+          cpus = '30'
+  }
+  withName: 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ' {
+          memory = '500.GB'
+          cpus = '72'
+          time = '24.h'
+  }
+  withName: 'CENTRIFUGE_CENTRIFUGE' {
+          memory = '100.GB'
+          cpus = '30'
+          time = '24.h'
+  }
+	withName: 'TAXPASTA_MERGE' {
+		errorStrategy = 'ignore'
+		memory = '24.GB'
+		cpus = '1'
+		time = '4.h'
+	}
+	withName: 'MOTUS_PROFILES' {
+		memory = '50.GB'
+		cpus = 30
+	}
+	withName: 'SYLPH_PROFILE'{
+		memory = '30.GB'
+		cpus = 30
+	}
+	withName: 'MELON' {
+		memory = '64.GB'
+		cpus = 30
+	}
+	withName: 'MOTUS_PREPLONG' {
+		memory = '8.GB'
+		cpus = 8
+		time = '16.h'
+	}
+	
+}
+
+```
+
+
 ### 20k
 
 ```{bash}
@@ -429,7 +558,7 @@ nextflow run nf-core/taxprofiler \
  --run_krona \
  --taxpasta_taxonomy_dir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/ \
  --sylph_taxonomy /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
- -c custom_small.config
+ -c custom_small_ont.config
 ```
 
 ### 10k
