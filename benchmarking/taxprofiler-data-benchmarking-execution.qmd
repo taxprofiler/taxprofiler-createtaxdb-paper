@@ -50,7 +50,7 @@ nextflow run nf-core/taxprofiler \
  --input /vol/permanent/benchmarking/samplesheets/taxprofiler-samplesheet_denbi.csv \
  --databases /vol/permanent/benchmarking/samplesheets/taxprofiler-databases_denbi30000.csv \
  -name txp_benchmark_30000 \
- --outdir /vol/permanent/benchmarking/taxprofiler/results_30000/ \
+ --outdir /vol/permanent/benchmarking/taxprofiler/results_illumina_30000/ \
  --perform_shortread_qc \
  --shortread_qc_dedup \
  --perform_shortread_complexityfilter \
@@ -142,7 +142,7 @@ nextflow run nf-core/taxprofiler \
  --input /vol/permanent/benchmarking/samplesheets/taxprofiler-samplesheet_denbi.csv \
  --databases /vol/permanent/benchmarking/samplesheets/taxprofiler-databases_denbi20000.csv \
  -name txp_benchmark_20000 \
- --outdir /vol/permanent/benchmarking/taxprofiler/results_20000/ \
+ --outdir /vol/permanent/benchmarking/taxprofiler/results_illumina_20000/ \
  --perform_shortread_qc \
  --shortread_qc_dedup \
  --perform_shortread_complexityfilter \
@@ -172,25 +172,23 @@ nextflow run nf-core/taxprofiler \
 
 ### 10k
 
-(Note: we had to run on different infrastructure due to wall-time restrictions, compared to the smaller database runs)
-
+Note: we had to run on different infrastructure due to walltime restrictions
 
 ```{bash}
 #| eval: false
 nextflow run nf-core/taxprofiler \
  -r 2.0.0 \
- --input /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/samplesheets/taxprofiler-samplesheet_raven.csv \
- --databases /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/samplesheets/taxprofiler-databases_raven10000.csv \
- -profile mpcdf,raven \
+ --input /vol/permanent/benchmarking/samplesheets/taxprofiler-samplesheet_denbi.csv \
+ --databases /vol/permanent/benchmarking/samplesheets/taxprofiler-databases_denbi10000.csv \
  -name txp_benchmark_10000 \
- --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/results_illumina_10000/ \
+ --outdir /vol/permanent/benchmarking/taxprofiler/results_illumina_10000/ \
  --perform_shortread_qc \
  --shortread_qc_dedup \
  --perform_shortread_complexityfilter \
  --perform_shortread_redundancyestimation \
  --perform_shortread_hostremoval \
- --hostremoval_reference /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/human-t2t-hla.fa.gz \
- --shortread_hostremoval_index /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/ \
+ --hostremoval_reference /vol/permanent/benchmarking/reference/human-t2t-hla.fa.gz \
+ --shortread_hostremoval_index /vol/permanent/benchmarking/reference/ \
  --run_bracken \
  --run_centrifuge \
  --run_diamond \
@@ -206,9 +204,9 @@ nextflow run nf-core/taxprofiler \
  --run_sylph \
  --run_profile_standardisation \
  --run_krona \
- --taxpasta_taxonomy_dir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/ \
- --sylph_taxonomy /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
- -c custom_medium.config
+ --taxpasta_taxonomy_dir /vol/permanent/benchmarking/auxiliary_files/ \
+ --sylph_taxonomy /vol/permanent/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
+ -c custom.config
 ```
 
 ### 5k
@@ -399,6 +397,203 @@ done
 ## Execution (Nanopore dataset)
 
 We do not run MetaPhlan due to a known problem with <= v4.1 (the version in nf-core/taxprofiler) and long read data, where BowTie2 would require too much memory.
+
+### 30k
+
+```{bash}
+#| eval: false
+nextflow run nf-core/taxprofiler \
+ -r 2.0.0 \
+ --input /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/samplesheets/taxprofiler-samplesheet_ont_raven.csv \
+ --databases /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/samplesheets/taxprofiler-databases_raven30000.csv \
+ -profile mpcdf,raven \
+ -name txp_benchmark_ont_30000 \
+ --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/results_ont_30000/ \
+ --perform_longread_qc \
+ --perform_longread_hostremoval \
+ --hostremoval_reference /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/human-t2t-hla.fa.gz \
+ --longread_hostremoval_index /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/human-t2t-hla.mmi \
+ --run_bracken \
+ --run_centrifuge \
+ --run_diamond \
+ --run_ganon \
+ --run_kaiju \
+ --run_kmcp \
+ --run_kraken2 \
+ --run_krakenuniq \
+ --run_melon \
+ --run_metacache \
+ --run_motus \
+ --run_sylph \
+ --run_profile_standardisation \
+ --run_krona \
+ --taxpasta_taxonomy_dir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/ \
+ --sylph_taxonomy /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
+ -c custom_small_ont.config
+```
+
+The config: `custom_small_ont.config` contained:
+
+```{groovy}
+#| eval: false
+process {
+	withName: 'FASTP_PAIRED' {
+		cpus   = 24
+		memory = '90.GB'
+	}
+  withName: 'PORECHOP_ABI' {
+          cpus = 24
+          memory = '110.GB'
+  }
+  withName: 'NANOQ' {
+          cpus = 24
+          memory = '110.GB'
+  }
+	withName: 'SAMTOOLS_STATS' {
+		memory = '32.GB'
+	}
+	withName: 'NONPAREIL_NONPAREIL' {
+		ext.args = "-k 15"
+	} 
+  withName: 'KAIJU_KAIJU' {
+          memory = '50.GB'
+          cpus   = '30'
+  }
+  withName: 'GANON_CLASSIFY' {
+          memory = '15.GB'
+          cpus   = '30'
+  }
+	withName: 'DIAMOND_BLASTX' {
+		memory = '50.GB'
+		cpus = '30'
+	}
+	withName: 'KMCP_PROFILE' {
+		memory = '50.GB'
+		cpus = '30'
+		time = '24.h'
+	}
+	withName: 'KMCP_SEARCH' {
+		memory = '50.GB'
+		cpus = '30'
+	}
+  withName: 'KRAKEN2_KRAKEN2'{
+          memory = '100.GB'
+          cpus   = '30'
+  }
+  withName: 'BRACKEN_BRACKEN'{
+          memory = '10.GB'
+          cpus   = '30'
+  }
+  withName: 'METACACHE_QUERY' {
+          memory = '100.GB'
+          cpus = '30'
+  }
+  withName: 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ' {
+          memory = '500.GB'
+          cpus = '72'
+          time = '24.h'
+  }
+  withName: 'CENTRIFUGE_CENTRIFUGE' {
+          memory = '100.GB'
+          cpus = '30'
+          time = '24.h'
+  }
+	withName: 'TAXPASTA_MERGE' {
+		errorStrategy = 'ignore'
+		memory = '24.GB'
+		cpus = '1'
+		time = '4.h'
+	}
+	withName: 'MOTUS_PROFILES' {
+		memory = '50.GB'
+		cpus = 30
+	}
+	withName: 'SYLPH_PROFILE'{
+		memory = '30.GB'
+		cpus = 30
+	}
+	withName: 'MELON' {
+		memory = '64.GB'
+		cpus = 30
+	}
+	withName: 'MOTUS_PREPLONG' {
+		memory = '8.GB'
+		cpus = 8
+		time = '16.h'
+	}
+	
+}
+
+```
+
+
+### 20k
+
+```{bash}
+#| eval: false
+nextflow run nf-core/taxprofiler \
+ -r 2.0.0 \
+ --input /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/samplesheets/taxprofiler-samplesheet_ont_raven.csv \
+ --databases /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/samplesheets/taxprofiler-databases_raven20000.csv \
+ -profile mpcdf,raven \
+ -name txp_benchmark_ont_20000 \
+ --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/results_ont_20000/ \
+ --perform_longread_qc \
+ --perform_longread_hostremoval \
+ --hostremoval_reference /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/human-t2t-hla.fa.gz \
+ --longread_hostremoval_index /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/human-t2t-hla.mmi \
+ --run_bracken \
+ --run_centrifuge \
+ --run_diamond \
+ --run_ganon \
+ --run_kaiju \
+ --run_kmcp \
+ --run_kraken2 \
+ --run_krakenuniq \
+ --run_melon \
+ --run_metacache \
+ --run_motus \
+ --run_sylph \
+ --run_profile_standardisation \
+ --run_krona \
+ --taxpasta_taxonomy_dir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/ \
+ --sylph_taxonomy /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
+ -c custom_small_ont.config
+```
+
+### 10k
+
+```{bash}
+#| eval: false
+nextflow run nf-core/taxprofiler \
+ -r 2.0.0 \
+ --input /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/samplesheets/taxprofiler-samplesheet_ont_raven.csv \
+ --databases /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/samplesheets/taxprofiler-databases_raven10000.csv \
+ -profile mpcdf,raven \
+ -name txp_benchmark_ont_10000 \
+ --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/results_ont_10000/ \
+ --perform_longread_qc \
+ --perform_longread_hostremoval \
+ --hostremoval_reference /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/human-t2t-hla.fa.gz \
+ --longread_hostremoval_index /raven/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/taxprofiler/reference/human-t2t-hla.mmi \
+ --run_bracken \
+ --run_centrifuge \
+ --run_diamond \
+ --run_ganon \
+ --run_kaiju \
+ --run_kmcp \
+ --run_kraken2 \
+ --run_krakenuniq \
+ --run_melon \
+ --run_metacache \
+ --run_motus \
+ --run_sylph \
+ --run_profile_standardisation \
+ --run_krona \
+ --taxpasta_taxonomy_dir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/ \
+ --sylph_taxonomy /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
+ -c custom_small.config
+```
 
 ### 5k
 
