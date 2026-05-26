@@ -6,7 +6,7 @@ kmcp,benchmark_10000-kmcp,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-pap
 kaiju,benchmark_10000-kaiju,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/kaiju/
 metacache,benchmark_10000-metacache,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/metacache/
 centrifuge,benchmark_10000-centrifuge,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/centrifuge/benchmark_10000-centrifuge
-kraken2,benchmark_10000-kraken2,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_5000/kraken2/benchmark_5000-kraken2
+kraken2,benchmark_10000-kraken2,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/kraken2/benchmark_10000-kraken2
 bracken,benchmark_10000-bracken,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/bracken/benchmark_10000-bracken
 krakenuniq,benchmark_10000-krakenuniq,,,/ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_10000/krakenuniq/benchmark_10000-krakenuniq
 motus,benchmark_30000-motus,,,/raven/u/jfellowsy/bin/miniconda3/envs/motus/lib/python3.9/site-packages/motus/db_mOTU
