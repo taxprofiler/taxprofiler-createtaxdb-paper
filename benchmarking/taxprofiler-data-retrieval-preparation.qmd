@@ -10,9 +10,6 @@ This notebook describes to retrieve the data used for nf-core/taxprofiler benchm
 
 For this benchmarking, we will perform two analyses on real datasets:
 
-- Tracking effects of sequencing depth on classification resource usage on a single database  (10.1016/j.cub.2021.09.031)
-- Resource usage of a short and long read datasets on a multiple databases (10.1038/s41564-022-01270-1) 
-
 ## Requirements
 
 Command line tools used in this notebook includes:
@@ -81,7 +78,7 @@ sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
 
 Where each sample name corresponds to
 
-- `_sma` shallow sequencing depth library at 20 million reads
+- `_sma` shallow sequencing depth library at 2 million reads
 - `_med` middle-sequencing depth at 100 million
 - `_lar` deep sequencing depth at 200 million reads
 
@@ -133,7 +130,7 @@ ln -s ~/bin/miniconda3/envs/motus/lib/python3.9/site-packages/motus/db_mOTU .  #
 
 ### metaphlan
 conda deactivate
-conda create -n metaphlan -c bioconda metaphlan=4.2.4 -y
+conda create -n metaphlan -c bioconda metaphlan=4.1.1 -y
 conda activate metaphlan
 metaphlan --install --db_dir metaphlan/
 
