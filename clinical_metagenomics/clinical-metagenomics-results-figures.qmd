@@ -6,7 +6,7 @@ format: html
 
 ## Figures for Illumina-sequenced clinical metagenomics data
 
-### Figure 5
+### Figure 6
 
 We will use the result files ending in "*report.txt" from the kraken2 folder and the taxpasta output file for DIAMOND. Make sure you are in the correct directory before running the following code.
 
@@ -15,6 +15,7 @@ We will use the result files ending in "*report.txt" from the kraken2 folder and
 library(tidyverse)
 library(ggplot2)
 library(dplyr)
+library(patchwork)
 
 setwd("path/to/kraken2")
 
@@ -39,7 +40,7 @@ read_kraken2_report <- function(file, sample_name) {
     kraken2_df$name   <- trimws(kraken2_df$name)
     kraken2_df$sample <- sample_name
     kraken2_df$tool   <- "Kraken2"
-    return(df)
+    return(kraken2_df)
 }
 
 kraken2_files <- list("PI2-20"  = "/path/to/PI2-20_k2_pluspf.kraken2.kraken2.report.txt",
@@ -104,7 +105,7 @@ diamond_df <- diamond_assigned %>%
     summarise(reads = sum(reads), .groups = "drop")
 
 # Compute percentages (total = sum of ALL reads including Other)
-diamond_percentages <- diamond_long %>%
+diamond_percentages <- diamond_df %>%
     filter(group != "Other") %>%
     group_by(sample) %>%
     mutate(percent = reads / sum(reads) * 100) %>%
@@ -127,7 +128,7 @@ taxonomic_composition_illumina <- bind_rows(kraken2_plot, diamond_plot) %>%
         tool   = factor(tool, levels = c("Kraken2", "Diamond"))
 )
 
-ggplot(taxonomic_composition_illumina,aes(y = sample,x = percent,fill = group)) +
+p1 <- ggplot(taxonomic_composition_illumina,aes(y = sample,x = percent,fill = group)) +
 geom_bar(stat = "identity", position = "stack") +
 facet_wrap(~ tool,ncol = 2,labeller = labeller(tool = c(Diamond = "DIAMOND"))) +
 scale_fill_manual(name   = "Taxonomic groups",
@@ -140,11 +141,11 @@ scale_fill_manual(name   = "Taxonomic groups",
     )
 ) +
 
-labs( x = "Percentage of reads (%)",y = "Sample names") +
+labs(title="Illumina", x = "Percentage of reads (%)",y = "Sample names") +
 theme_bw() +
     theme(
 
-        axis.text.x = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
         axis.text.y = element_text(size = 12),
 
         axis.title.x = element_text(
@@ -163,101 +164,6 @@ theme_bw() +
 ) +
 
 coord_cartesian(xlim = c(0, 100))
-```
-
-### Figure 6
-
-```{r}
-target_viruses_df <- read.csv(text = "
-sample,Classification tool,virus_reads,total_reads
-PI2-20,Kraken2,3467333,69281140
-PI2-20,DIAMOND,2250135,69281140
-InfB-22,Kraken2,7312,74819268
-InfB-22,DIAMOND,8710,74819268
-InfA-30,Kraken2,1,63606148
-InfA-30,DIAMOND,1,63606148
-Met-32,Kraken2,560,90524074
-Met-32,DIAMOND,426,90524074
-RSA-24,Kraken2,4794074,60594914
-RSA-24,DIAMOND,1796895,60594914
-RSV-25,Kraken2,668892,87510238
-RSV-25,DIAMOND,287342,87510238
-")
-
-options(scipen = 999)
-target_viruses_df$RPM <- (target_viruses_df$virus_reads / target_viruses_df$total_reads) * 1000000
-target_viruses_df$RPM <- format(target_viruses_df$RPM, big.mark = ",", scientific = FALSE)
-target_viruses_df$RPM <- as.numeric(gsub(",", "", target_viruses_df$RPM))
-target_viruses_df$logRPM <- log10(target_viruses_df$RPM + 1)
-
-target_viruses_df <- target_viruses_df %>%
-    mutate(virus = recode(sample,
-            "PI2-20" = "Human orthorubulavirus 2",
-            "InfB-22" = "Influenza B virus",
-            "InfA-30" = "Influenza A virus",
-            "Met-32" = "Human metapneumovirus",
-            "RSA-24" = "Human respiratory syncytial virus",
-            "RSV-25" = "Human respiratory syncytial virus"
-    ),
-
-    label = paste(sample, virus, sep = "\n"),
-
-    label = factor(label,levels = c(
-            "PI2-20\nHuman orthorubulavirus 2",
-            "InfB-22\nInfluenza B virus",
-            "InfA-30\nInfluenza A virus",
-            "Met-32\nHuman metapneumovirus",
-            "RSA-24\nHuman respiratory syncytial virus",
-            "RSV-25\nHuman respiratory syncytial virus"
-        )
-    )
-)
-
-target_viruses_df$Classification.tool <- factor(target_viruses_df$Classification.tool, levels = c("Kraken2","DIAMOND")
-)
-
-
-target_viruses_df$label <- factor(
-    target_viruses_df$label,
-    levels = rev(unique(target_viruses_df$label))
-)
-
-ggplot(target_viruses_df, aes(x = label, y = logRPM, fill = Classification.tool)) +
-
-    geom_col(position = position_dodge2(width = 0.8, reverse=TRUE), width = 0.7) +
-    coord_flip() +
-    scale_fill_manual(values = c(
-        "Kraken2" = "#fdbf6f",
-        "DIAMOND" = "#ccebc5"
-)) +
-
-    labs(
-        x = "Target virus",
-        y = expression(log[10]*"(RPM + 1)"),
-    fill = "Classification tool"
-    ) +
-
-    theme_bw() +
-    theme(
-        axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size = 12),
-
-        axis.title.x = element_text(
-        size = 15,
-        margin = margin(t = 10)
-    ),
-
-        axis.title.y = element_text(
-        size = 15,
-        margin = margin(r = 10)
-    ),
-
-    legend.title = element_text(size = 15),
-    legend.text = element_text(size = 12),
-    strip.text = element_text(size = 13)
-
-)
-
 ```
 
 ## Figures for Nanopore-sequenced clinical metagenomics data
@@ -310,10 +216,6 @@ for file in *_lineage.txt; do
 done
 ```
 
-### Figure 7
-
-For the Figure 7, we will basically use the same code as we used for Figure 5, and we will also add MetaCache to the plot.
-
 Make sure you are in the correct directory before running the following code. We will start with the Kraken2 classification reports.
 
 ```{r}
@@ -357,8 +259,8 @@ kraken2_files_nanopore <- list("PI2-20"  = "/path/to/barcode33_barcode33_k2_plus
                             "RSV-25"  = "/path/to/barcode38_barcode38_k2_pluspf.kraken2.kraken2.report.txt"
 )
 
-kraken2_all_files_nanopore <- bind_rows(mapply(read_kraken2_report,
-                                kraken2_files_nanopore, names(kraken2_files_nanopore), SIMPLIFY = FALSE))
+kraken2_all_files_nanopore <- bind_rows(mapply(read_kraken2_report,kraken2_files_nanopore, names(kraken2_files_nanopore), SIMPLIFY = FALSE))
+
 
 kraken2_plot_nanopore <- kraken2_all_files_nanopore %>%
     filter(name %in% c("Viruses", "Bacteria", "Eukaryota", "Archaea", "unclassified")) %>%
@@ -421,7 +323,7 @@ metacache_plot <- map_dfr(metacache_files, function(f) { metacache_df <- read.ta
     header = FALSE,
     fill = TRUE,
     stringsAsFactors = FALSE
-)
+    )
 
 colnames(metacache_df) <- c("group", "count", "percent")
 
@@ -434,6 +336,7 @@ metacache_df %>%
         tool = "MetaCache"
         ) %>%
 select(sample, tool, group, percent)
+})
 
 #We will now combine the three dataframes for plotting.
 
@@ -443,9 +346,9 @@ plot_data_nanopore <- bind_rows(kraken2_plot_nanopore, diamond_plot_nanopore, me
         sample = factor(sample, levels = rev(sample_order_nanopore)),
         tool   = factor(tool, levels = c("Kraken2", "Diamond", "MetaCache"))
 )
-})
 
-ggplot(plot_data_nanopore, aes(y = sample, x = percent,fill = group)) +
+
+p2 <- ggplot(plot_data_nanopore, aes(y = sample, x = percent,fill = group)) +
     geom_bar(stat = "identity", position = "stack") +
     facet_wrap(~ tool, nrow = 1, labeller = labeller(tool = c(Diamond = "DIAMOND"))) +
     scale_fill_manual(
@@ -460,6 +363,7 @@ ggplot(plot_data_nanopore, aes(y = sample, x = percent,fill = group)) +
 ) +
 
 labs(
+    title = "Oxford Nanopore",
     x = "Percentage of reads (%)",
     y = "Sample names"
 ) +
@@ -467,7 +371,7 @@ labs(
 theme_bw() +
     theme(
 
-        axis.text.x = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
         axis.text.y = element_text(size = 12),
 
         axis.title.x = element_text(
@@ -488,4 +392,258 @@ theme_bw() +
 coord_cartesian(xlim = c(0, 100))
 
 
+taxonomic_composition <- p1 + p2 +
+    plot_layout(guides = "collect") &
+    theme(legend.position = "bottom")
+
+final_plot <- taxonomic_composition +
+        plot_annotation(
+        tag_levels = "A"
+)
+
+ggsave(
+    filename = "taxonomic_distribution.jpeg",
+    plot = final_plot,
+    width = 14,
+    height = 6,
+    dpi = 300
+)
+
 ```
+
+### Figure 7
+
+```{r}
+target_viruses_df <- read.csv(text = "
+sample,Classification tool,virus_reads,total_reads
+PI2-20,Kraken2,3467333,69281140
+PI2-20,DIAMOND,2250135,69281140
+InfB-22,Kraken2,7312,74819268
+InfB-22,DIAMOND,8710,74819268
+InfA-30,Kraken2,1,63606148
+InfA-30,DIAMOND,1,63606148
+Met-32,Kraken2,560,90524074
+Met-32,DIAMOND,426,90524074
+RSA-24,Kraken2,4794074,60594914
+RSA-24,DIAMOND,1796895,60594914
+RSV-25,Kraken2,668892,87510238
+RSV-25,DIAMOND,287342,87510238
+")
+
+options(scipen = 999)
+target_viruses_df$RPM <- (target_viruses_df$virus_reads / target_viruses_df$total_reads) * 1000000
+target_viruses_df$RPM <- format(target_viruses_df$RPM, big.mark = ",", scientific = FALSE)
+target_viruses_df$RPM <- as.numeric(gsub(",", "", target_viruses_df$RPM))
+target_viruses_df$logRPM <- log10(target_viruses_df$RPM + 1)
+
+target_viruses_df <- target_viruses_df %>%
+    mutate(virus = recode(sample,
+            "PI2-20" = "Human orthorubulavirus 2",
+            "InfB-22" = "Influenza B virus",
+            "InfA-30" = "Influenza A virus",
+            "Met-32" = "Human metapneumovirus",
+            "RSA-24" = "Human respiratory syncytial virus",
+            "RSV-25" = "Human respiratory syncytial virus"
+    ),
+
+    label = paste(sample, virus, sep = "\n"),
+
+    label = factor(label,levels = c(
+            "PI2-20\nHuman orthorubulavirus 2",
+            "InfB-22\nInfluenza B virus",
+            "InfA-30\nInfluenza A virus",
+            "Met-32\nHuman metapneumovirus",
+            "RSA-24\nHuman respiratory syncytial virus",
+            "RSV-25\nHuman respiratory syncytial virus"
+        )
+    )
+)
+
+target_viruses_df$Classification.tool <- factor(target_viruses_df$Classification.tool, levels = c("Kraken2","DIAMOND"))
+
+
+target_viruses_df$label <- factor(
+    target_viruses_df$label,
+    levels = rev(unique(target_viruses_df$label))
+)
+
+all_classifiers <- c("Kraken2", "DIAMOND", "MetaCache")
+
+add_metacache <- target_viruses_df %>%
+    distinct(label) %>%
+    slice(1) %>%
+    mutate(Classification.tool = factor("MetaCache",
+                                        levels = c("Kraken2", "DIAMOND", "MetaCache")),
+    logRPM = NA)
+
+target_viruses_df_with_metacache <- bind_rows(target_viruses_df, add_metacache)
+
+p1_target_virus <- ggplot(target_viruses_df_with_metacache, aes(x = label, y = logRPM, fill = Classification.tool)) +
+
+    geom_col(position = position_dodge2(width = 0.8, reverse=TRUE), width = 0.7) +
+    coord_flip() +
+    scale_fill_manual(name = "Classification tool", values = c(
+        "Kraken2" = "#fdbf6f",
+        "DIAMOND" = "#ccebc5",
+        "MetaCache" = "#cab2d6"
+), drop = FALSE ) +
+    labs(
+        title="Illumina",
+        x = "Target virus",
+        y = expression(log[10]*"(RPM + 1)"),
+        fill = "Classification tool"
+    ) +
+
+    theme_bw() +
+    theme(
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 9),
+
+        axis.title.x = element_text(
+        size = 15,
+        margin = margin(t = 10)
+    ),
+
+        axis.title.y = element_text(
+        size = 15,
+        margin = margin(r = 10)
+    ),
+
+    legend.title = element_text(size = 15),
+    legend.text = element_text(size = 12),
+    strip.text = element_text(size = 13)
+
+)
+
+
+target_viruses_df_nanopore <- read.csv(text = "
+sample,Classification tool,virus_reads,total_reads
+PI2-20,Kraken2,463080,6028645
+PI2-20,DIAMOND,358147,6028645
+PI2-20,MetaCache,387331,6028645
+InfB-22,Kraken2,1520,9241527
+InfB-22,DIAMOND,1913,9241527
+InfB-22,MetaCache,756,9241527
+InfA-30,Kraken2,0,5787962
+InfA-30,DIAMOND,0,5787962
+InfA-30,MetaCache,0,5787962
+Met-32,Kraken2,77,7686085
+Met-32,DIAMOND,74,7686085
+Met-32,MetaCache,42,7686085
+RSA-24,Kraken2,1195031,8908963
+RSA-24,DIAMOND,790931,8908963
+RSA-24,MetaCache,1074350,8908963
+RSV-25,Kraken2,203847,11923693
+RSV-25,DIAMOND,140476,11923693
+RSV-25,MetaCache,126803,11923693
+")
+
+options(scipen = 999)
+target_viruses_df_nanopore$RPM <- (target_viruses_df_nanopore$virus_reads / target_viruses_df_nanopore$total_reads) * 1000000
+target_viruses_df_nanopore$RPM <- format(target_viruses_df_nanopore$RPM, big.mark = ",", scientific = FALSE)
+target_viruses_df_nanopore$RPM <- as.numeric(gsub(",", "", target_viruses_df_nanopore$RPM))
+target_viruses_df_nanopore$logRPM <- log10(target_viruses_df_nanopore$RPM + 1)
+
+
+target_viruses_df_nanopore <- target_viruses_df_nanopore %>%
+    mutate(virus = recode(sample,
+            "PI2-20" = "Human orthorubulavirus 2",
+            "InfB-22" = "Influenza B virus",
+            "InfA-30" = "Influenza A virus",
+            "Met-32" = "Human metapneumovirus",
+            "RSA-24" = "Human respiratory syncytial virus",
+            "RSV-25" = "Human respiratory syncytial virus"
+    ),
+
+    label = paste(sample, virus, sep = "\n"),
+
+    label = factor(label,levels = c(
+            "PI2-20\nHuman orthorubulavirus 2",
+            "InfB-22\nInfluenza B virus",
+            "InfA-30\nInfluenza A virus",
+            "Met-32\nHuman metapneumovirus",
+            "RSA-24\nHuman respiratory syncytial virus",
+            "RSV-25\nHuman respiratory syncytial virus"
+        )
+    )
+)
+
+target_viruses_df_nanopore$Classification.tool <- factor(target_viruses_df_nanopore$Classification.tool, levels = c("Kraken2","DIAMOND","MetaCache"))
+
+target_viruses_df_nanopore$label <- factor(
+    target_viruses_df_nanopore$label,
+    levels = rev(unique(target_viruses_df_nanopore$label))
+)
+
+
+p2_target_virus <-ggplot(target_viruses_df_nanopore, aes(x = label, y = logRPM, fill = Classification.tool)) +
+
+    geom_col(position = position_dodge2(width = 0.8, reverse=TRUE), width = 0.7) +
+    coord_flip() +
+    scale_fill_manual(name = "Classification tool", values = c(
+        "Kraken2" = "#fdbf6f",
+        "DIAMOND" = "#ccebc5",
+        "MetaCache" = "#cab2d6"
+)) +
+
+    labs(
+        title="Oxford Nanopore",
+        x = "Target virus",
+        y = expression(log[10]*"(RPM + 1)"),
+        fill = "Classification tool"
+    ) +
+
+    theme_bw() +
+    theme(
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 9),
+
+        axis.title.x = element_text(
+        size = 15,
+        margin = margin(t = 10)
+    ),
+
+        axis.title.y = element_text(
+        size = 15,
+        margin = margin(r = 10)
+    ),
+
+    legend.title = element_text(size = 15),
+    legend.text = element_text(size = 12),
+    strip.text = element_text(size = 13)
+
+)
+
+
+
+target_virus <- p1_target_virus + p2_target_virus +
+    plot_layout(guides = "collect") &
+    theme(legend.position = "bottom")
+
+final_plot_target_virus <- target_virus +
+        plot_annotation(
+        tag_levels = "A"
+    )
+
+
+ggsave(
+    filename = "target_virus_abundances.jpeg",
+    plot = final_plot_target_virus,
+    width = 14,
+    height = 6,
+    dpi = 300
+)
+
+```
+
+
+shared_fill <- scale_fill_manual(
+    name = "Classification tool",
+    values = c(
+        "Kraken2" = "#fdbf6f",
+        "DIAMOND" = "#ccebc5",
+        "MetaCache" = "#cab2d6"
+    ),
+    limits = c("Kraken2", "DIAMOND", "MetaCache"),
+    drop = FALSE
+)
