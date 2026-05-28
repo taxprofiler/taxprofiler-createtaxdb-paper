@@ -215,8 +215,12 @@ processes_to_remove_ont = c(
 )
 
 ## Clean up, including dropping duplicated rows due to cached tasks from `-resume`  runs, dropping non-building processes
-data_tracefiles_clean_ont <- data_tracefiles_raw_ont |> 
-  filter(status == 'COMPLETED', !str_detect(name, paste0(processes_to_remove_ont, collapse = '|'))) |> 
+## NOTE: due to an initial typo in the database sheets , we had to re-run Kraken2 in a second separate run. So we also filter these runs and re-add the Kraken2 process entries
+data_tracefiles_ont <- data_tracefiles_raw_ont |> 
+  filter(
+    !str_detect(file_name, '_k2/'),
+    status == 'COMPLETED', !str_detect(name, paste0(processes_to_remove_ont, collapse = '|'))
+    ) |> 
   rowwise() |> 
   mutate(sample_name = str_split(name, '\\|') |> unlist() |> pluck(-1) |> str_remove('\\)')) |> 
   mutate(
@@ -234,7 +238,37 @@ data_tracefiles_clean_ont <- data_tracefiles_raw_ont |>
   select(sample_depth, sample_name, nr_genomes, process, peak_vmem) |> 
   unique() |> 
   separate(peak_vmem, c('peak_vmem_value', 'peak_vmem_unit'), sep = ' ') |> 
+  mutate(peak_vmem_value_gb = ifelse(peak_vmem_unit == 'MB', as.numeric(peak_vmem_value) / 1000, as.numeric(peak_vmem_value) )) |> 
+  filter(!(nr_genomes %in% c(1000, 2000, 10000) & process == 'KRAKEN2_KRAKEN2'))
+
+
+## NOTE: due to an initial typo in the database sheets , we had to re-run Kraken2 in a second separate run. So we also remove these and re-add separately, and re-join
+data_tracefiles_clean_ont_k2 <- data_tracefiles_raw_ont |> 
+  filter(
+    str_detect(file_name, '_k2/'),
+    status == 'COMPLETED', !str_detect(name, paste0(processes_to_remove_ont, collapse = '|'))
+    ) |> 
+  rowwise() |> 
+  mutate(sample_name = str_split(name, '\\|') |> unlist() |> pluck(-1) |> str_remove('\\)')) |> 
+  mutate(
+      process = str_split(name, ':') |> unlist() |> pluck(-1) |> str_split(' ') |> unlist() |> pluck(1),
+      nr_genomes = str_split(name, '\\|') |> unlist() |> pluck(1) |> str_remove(".* \\(benchmark_") |> str_remove("-.*") |> as.numeric(),
+      sample_depth = case_when(
+          str_starts(sample_name, "24_") ~ 2400000,
+          str_starts(sample_name, "35_") ~ 3500000,
+          str_starts(sample_name, "40_") ~ 4000000,
+          str_starts(sample_name, "43_") ~ 4300000,
+          str_starts(sample_name, "52_") ~ 4300000,
+      )
+    ) |>
+  arrange(sample_depth) |> 
+  select(sample_depth, sample_name, nr_genomes, process, peak_vmem) |> 
+  filter(process == 'KRAKEN2_KRAKEN2') |> 
+  unique() |> 
+  separate(peak_vmem, c('peak_vmem_value', 'peak_vmem_unit'), sep = ' ') |> 
   mutate(peak_vmem_value_gb = ifelse(peak_vmem_unit == 'MB', as.numeric(peak_vmem_value) / 1000, as.numeric(peak_vmem_value) ))
+
+data_tracefiles_clean_ont <- bind_rows(data_tracefiles_ont, data_tracefiles_clean_ont_k2)
 ```
 
 We can then plot the memory usage of each process, with each size of input datasets.

@@ -1,0 +1,31 @@
+FASTQC:
+  fastqc: 0.12.1
+FASTQC_PROCESSED:
+  fastqc: 0.12.1
+KRAKEN2_KRAKEN2:
+  kraken2: 2.1.5
+  pigz: 2.8
+KRAKENTOOLS_COMBINEKREPORTS_KRAKEN:
+  combine_kreports.py: 1.2
+KRAKENTOOLS_KREPORT2KRONA:
+  kreport2krona.py: 1.2
+KRONA_KTIMPORTTEXT:
+  krona: 2.8.1
+MINIMAP2_ALIGN:
+  minimap2: 2.29-r1283
+  samtools: 1.21
+NANOQ:
+  nanoq: 0.10.0
+PORECHOP_ABI:
+  porechop_abi: 0.5.0
+SAMTOOLS_FASTQ:
+  samtools: 1.22.1
+SAMTOOLS_STATS:
+  samtools: 1.22.1
+SAMTOOLS_VIEW:
+  samtools: 1.22.1
+TAXPASTA_MERGE:
+  taxpasta: 0.7.0
+Workflow:
+    nf-core/taxprofiler: v2.0.0-gfa1aab0
+    Nextflow: 25.10.4
