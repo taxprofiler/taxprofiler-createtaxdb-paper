@@ -82,8 +82,6 @@ Where each sample name corresponds to
 - `_med` middle-sequencing depth at 100 million
 - `_lar` deep sequencing depth at 200 million reads
 
-
-
 ### Activated sludge dataset (Nanopore)
 
 

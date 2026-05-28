@@ -14,7 +14,7 @@ For the resource usage/benchmarking analyses, see the following notebooks:
 2. nf-core/taxprofiler
    1. [benchmarking/taxprofiler-data-retrieval-preparation.qmd](benchmarking/taxprofiler-data-retrieval-preparation.qmd)
    2. [benchmarking/taxprofiler-data-benchmarking-execution.qmd](benchmarking/taxprofiler-data-benchmarking-execution.qmd)
-   3. [benchmarking/taxprofiler-results-benchmarking-resourceusage.qmd](benchmarking/taxprofiler-results-benchmarking-resourceusage)
+   3. [benchmarking/taxprofiler-results-benchmarking-resourceusage.qmd](benchmarking/taxprofiler-results-benchmarking-resourceusage.qmd)
 
 
 ## Clinical metagenomics study case
