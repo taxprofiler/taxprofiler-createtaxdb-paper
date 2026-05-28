@@ -20,5 +20,5 @@ For the resource usage/benchmarking analyses, see the following notebooks:
 ## Clinical metagenomics study case
 
 1. [clinical_metagenomics/clinical_metagenomics_database_construction.qmd](clinical_metagenomics/clinical_metagenomics_database_construction.qmd)
-2.[clinical_metagenomics/clinical_metagenomics_taxprofiler_run.qmd](clinical_metagenomics/clinical_metagenomics_taxprofile_run.qmd)
-3.[clinical_metagenomics/clinical-metagenomics-results-figures.qmd](clinical_metagenomics/clinical-metagenomics-results-figures.qmd)
+2. [clinical_metagenomics/clinical_metagenomics_taxprofiler_run.qmd](clinical_metagenomics/clinical_metagenomics_taxprofile_run.qmd)
+3. [clinical_metagenomics/clinical-metagenomics-results-figures.qmd](clinical_metagenomics/clinical-metagenomics-results-figures.qmd)
