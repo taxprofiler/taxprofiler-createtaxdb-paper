@@ -7,7 +7,7 @@ format: html
 ## Introduction
 
 This notebook describes how the genomes for testing nf-core/createtaxdb in the clinical metagenomics case study were
-selected.The genomes used for presenting the application of nf-core/taxprofiler in the clinical metagenomics case study were retrieved from https://benlangmead.github.io/aws-indexes/k2 using PlusPF (2/26/2026). The genomes were used to build DIAMOND,MetaCache and sylph databases with nf-core/createtaxdb. To ensure consistency in the analysis,we also built a Kraken2 database using nf-core/createtaxdb, even though a prebuilt database is available from the same source.
+selected.The genomes used for presenting the application of nf-core/taxprofiler in the clinical metagenomics case study were retrieved from https://benlangmead.github.io/aws-indexes/k2 using PlusPF (2/26/2026). The genomes were used to build DIAMOND and MetaCache databases with nf-core/createtaxdb. To ensure consistency in the analysis,we also built a Kraken2 database using nf-core/createtaxdb, even though a prebuilt database is available from the same source.
 
 The clinical samples were further analysed with nf-core/taxprofiler.
 
@@ -32,7 +32,7 @@ Download the auxiliary taxonomy metadata files necessary to build the databases 
 - `nucl_wgs.accession2taxid.gz` from [`pub/taxonomy/accession2taxid`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/)
 - `prot.accession2taxid.gz` from [`pub/taxonomy/accession2taxid`](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/)
 
-We are going to use both `nucl_gb.accession2taxid.gz` and `nucl_wgs.accession2taxid.gz` so we are going to concatenate them into a single file `combined.accession2taxid.gz` to be used for building the Kraken2, sylph and MetaCache databases. The `prot.accession2taxid.gz` file will be used for building the DIAMOND database.
+We are going to use both `nucl_gb.accession2taxid.gz` and `nucl_wgs.accession2taxid.gz` so we are going to concatenate them into a single file `combined.accession2taxid.gz` to be used for building the Kraken2 and MetaCache databases. The `prot.accession2taxid.gz` file will be used for building the DIAMOND database.
 
 The commands are the same as described in benchmarking section.
 
@@ -147,7 +147,7 @@ With the samplesheet built, we will now build the kraken2 database
 
 ## Building Kraken2 database
 
-At KI for kraken2 and sylph, and initally for metacache
+At KI for kraken2 and initally for metacache
 
 ```{bash}
 #| eval: false
@@ -156,14 +156,13 @@ nextflow run nf-core/createtaxdb \
 -r 2.1.0 \
 -profile singularity \
 --input samplesheet_kraken2.csv \
---outdir results_kraken2_sylph_metacache \
+--outdir results_kraken2_metacache \
 --dbname benlangmead \
 --nodesdmp taxdmp/nodes.dmp \
 --namesdmp taxdmp/names.dmp \
 --accession2taxid combined.accession2taxid.gz \
 --build_kraken2 --kraken2_keepintermediate \
---build_sylph \
---build_metacache \ 
+--build_metacache \
 -c custom.config -resume
 ```
 
