@@ -33,6 +33,7 @@ library(purrr) ## for mapping operations
 library(stringr) ## for string operations
 library(tidyr) ## for additional column operations
 library(patchwork) ## for plot joining
+library(forcats) ## for factors
 sessionInfo()
 ```
 ## Illumina
@@ -67,7 +68,7 @@ data_tracefiles_clean_illumina <- data_tracefiles_raw_illumina |>
   rowwise() |> 
   mutate(
     sample_name = str_split(name, '\\|') |> unlist() |> pluck(-1) |> str_remove('\\)'),
-    sample_name = if_else(sample_name == 1, 'All samples', sample_name)
+    sample_name = if_else(sample_name == 1, 'All samples', sample_name) |> fct(levels = c('All samples', '2604_sma', '2604_med', '2604_lar'))
     ) |> 
   mutate(
       process = str_split(name, ':') |> unlist() |> pluck(-1) |> str_split(' ') |> unlist() |> pluck(1),
@@ -89,18 +90,41 @@ We can then plot the memory usage of each process, with each size of input datas
 We need to separate MetaPhlAn and mOTUs as they have fixed databases (i.e. don't change in size).
 
 ```{r}
-figure_memory_usage_illumina_customdb <- ggplot(data_tracefiles_clean_illumina |> filter(!process %in% c("METAPHLAN_METAPHLAN", "MOTUS_PROFILE")), 
-                                                aes(x = nr_genomes, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
+figure_memory_usage_illumina_customdb <- ggplot(data_tracefiles_clean_illumina |> filter(!process %in% c("METAPHLAN_METAPHLAN", "MOTUS_PROFILE", "KRAKENUNIQ_PRELOADEDKRAKENUNIQ")), 
+                                                aes(x = nr_genomes / 1000, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)) +
   geom_point(size = 2) +
   geom_line() +
   scale_shape_manual(values = 1:13) +
   ylab('Peak virtual memory (GB)') +
-  xlab('Size of database (nr. genomes, approx)') +
+  xlab('Number of genomes in database (thousands)') +
   labs(
-    colour = 'Tool Process', 
-    shape = 'Tool Process'
+    colour = 'Sample', 
+    shape = 'Sample'
     ) +
   theme_bw() +
+  theme(
+      legend.position = 'bottom',
+    ) +
+  facet_wrap(~process, nrow = 2)
+
+figure_memory_usage_illumina_customdb_noku <- ggplot(
+    data_tracefiles_clean_illumina |> 
+      filter(process %in% c("KRAKENUNIQ_PRELOADEDKRAKENUNIQ")), 
+      aes(x = nr_genomes / 1000, y = peak_vmem_value_gb, colour = sample_name, shape = sample_name)
+  ) +
+  geom_point(size = 2) +
+  geom_line() +
+  scale_shape_manual(values = 1:13) +
+  ylab('Peak virtual memory (GB)') +
+  xlab('Number of genomes (thousands)') +
+  labs(
+    colour = 'Sample', 
+    shape = 'Sample'
+    ) +
+  theme_bw() +
+  theme(
+      legend.position = 'bottom',
+    ) +
   facet_wrap(~process)
 
 figure_memory_usage_illumina_fixed_db <-  ggplot(data_tracefiles_clean_illumina |> filter(process %in% c("METAPHLAN_METAPHLAN", "MOTUS_PROFILE")), 
@@ -110,13 +134,16 @@ figure_memory_usage_illumina_fixed_db <-  ggplot(data_tracefiles_clean_illumina 
   ylab('Peak virtual memory (GB)') +
   xlab('Sample') +
   labs(
-    colour = 'Tool Process', 
-    shape = 'Tool Process'
+    fill = 'Sample', 
     ) +
   theme_bw() +
+  theme(
+      legend.position = 'bottom',
+    ) +
   facet_wrap(~process)
 
 figure_memory_usage_illumina_customdb
+figure_memory_usage_illumina_customdb_noku
 figure_memory_usage_illumina_fixed_db
 ```
 
@@ -129,7 +156,7 @@ figure_memory_usage_illumina_noku_customdb <- ggplot(data_tracefiles_clean_illum
   geom_line() +
   scale_shape_manual(values = 1:13) +
   ylab('Peak virtual memory (GB)') +
-  xlab('Size of database (nr. genomes, approx)') +
+  xlab('Size of database (nr. genomes)') +
   labs(
     colour = 'Tool Process', 
     shape = 'Tool Process'
@@ -148,7 +175,7 @@ figure_memory_usage_scaled_illumina <- ggplot(data_tracefiles_clean_illumina |> 
   scale_shape_manual(values = 1:13) +
   scale_y_log10(guide = "axis_logticks", labels = label_bytes(scale = 1000000000)) +
   ylab('Peak virtual memory (GB)') +
-  xlab('Size of database (nr. genomes, approx)') +
+  xlab('Size of database (nr. genomes)') +
   labs(
     colour = 'Tool Process', 
     shape = 'Tool Process'
@@ -221,7 +248,7 @@ figure_memory_usage_ont_customdb <- ggplot(data_tracefiles_clean_ont |> filter(!
   geom_line() +
   scale_shape_manual(values = 1:13) +
   ylab('Peak virtual memory (GB)') +
-  xlab('Size of database (nr. genomes, approx)') +
+  xlab('Size of database (nr. genomes)') +
   labs(
     colour = 'Tool Process', 
     shape = 'Tool Process'
@@ -255,7 +282,7 @@ figure_memory_usage_ont_noku_customdb <- ggplot(data_tracefiles_clean_ont |> fil
   geom_line() +
   scale_shape_manual(values = 1:13) +
   ylab('Peak virtual memory (GB)') +
-  xlab('Size of database (nr. genomes, approx)') +
+  xlab('Size of database (nr. genomes)') +
   labs(
     colour = 'Tool Process', 
     shape = 'Tool Process'
@@ -274,7 +301,7 @@ figure_memory_usage_scaled_ont <- ggplot(data_tracefiles_clean_ont |> filter(!pr
   scale_shape_manual(values = 1:13) +
   scale_y_log10(guide = "axis_logticks", labels = label_bytes(scale = 1000000000)) +
   ylab('Peak virtual memory (GB)') +
-  xlab('Size of database (nr. genomes, approx)') +
+  xlab('Size of database (nr. genomes)') +
   labs(
     colour = 'Tool Process', 
     shape = 'Tool Process'
@@ -289,9 +316,12 @@ figure_memory_usage_scaled_ont
 
 <!-- TODO TO UPDATE --> 
 
-```{r fig.width=6, fig.height=8}
-final_resource_figure_illumina <- figure_memory_usage_illumina_scaled_customdb |  figure_memory_usage_illumina_customdb + plot_annotation(tag_levels = 'A')
+```{r, fig.width=10, fig.height=8}
+final_resource_figure_illumina <- figure_memory_usage_illumina_customdb / 
+  ( figure_memory_usage_illumina_customdb_noku + figure_memory_usage_illumina_fixed_db ) + 
+  plot_annotation(tag_levels = 'A') +
+  plot_layout(heights = c(3, 1))
 final_resource_figure_illumina
 
-ggsave('fig4-taxprofiler-resourceusage.png', final_resource_figure_illumina, width = 6, height = 8,  dpi = 300)
+ggsave('fig4-taxprofiler-resourceusage_illumina.png', final_resource_figure_illumina, width = 20, height = 18, units = 'cm',  dpi = 300, scale = 1.3)
 ```
