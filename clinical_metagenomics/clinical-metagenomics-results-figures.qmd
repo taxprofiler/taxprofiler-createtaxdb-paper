@@ -4,9 +4,11 @@ author: "Sofia Stamouli"
 format: html
 ---
 
-## Figures for Illumina-sequenced clinical metagenomics data
+## Figures for Illumina and OXFORD Nanopore-sequenced clinical metagenomics data
 
 ### Figure 6
+
+#### Script for taxonomic distribution in Illumina and Oxford Nanopore-sequenced clinical metagenomics data
 
 We will use the result files ending in "*report.txt" from the kraken2 folder and the taxpasta output file for DIAMOND. Make sure you are in the correct directory before running the following code.
 
@@ -35,8 +37,7 @@ sample_diamond_map <- c(
 
 read_kraken2_report <- function(file, sample_name) {
     kraken2_df <- read.table(file, sep = "\t", header = FALSE,
-        col.names = c("percent", "reads_clade", "reads_taxon","rank", "taxid", "name"),
-                    fill = TRUE, quote = "")
+        col.names = c("percent", "reads_clade", "reads_taxon","rank", "taxid", "name"),fill = TRUE, quote = "")
     kraken2_df$name   <- trimws(kraken2_df$name)
     kraken2_df$sample <- sample_name
     kraken2_df$tool   <- "Kraken2"
@@ -166,8 +167,6 @@ theme_bw() +
 coord_cartesian(xlim = c(0, 100))
 ```
 
-## Figures for Nanopore-sequenced clinical metagenomics data
-
 ### Metacache
 
 For Metacache results, we needed to do some postprocessing steps to get the data into a format that could be plotted.
@@ -290,8 +289,6 @@ diamond_assigned_nanopore <- diamond_files_nanopore %>%
     )
 )
 
-
-# Pivot to long, sum reads per sample per kingdom
 diamond_df_nanopore <- diamond_assigned_nanopore %>%
     select(group, all_of(sample_diamond_cols_nanopore)) %>%
     pivot_longer(all_of(sample_diamond_cols_nanopore), names_to = "col_name", values_to = "reads") %>%
@@ -307,9 +304,8 @@ diamond_percentages_nanopore <- diamond_df_nanopore %>%
     mutate(tool = "Diamond") %>%
     select(sample, tool, group, percent)
 
-# Rename percent column and round
+# Round percentages
 diamond_plot_nanopore <- diamond_percentages_nanopore %>%
-    rename(percent = percent) %>%
     mutate(percent = round(percent, 2)) %>%
     select(sample, tool, group, percent)
 
@@ -317,13 +313,7 @@ diamond_plot_nanopore <- diamond_percentages_nanopore %>%
 
 metacache_files <- list.files(pattern = "_metacache_lineage_summary.txt$")
 
-metacache_plot <- map_dfr(metacache_files, function(f) { metacache_df <- read.table(
-    f,
-    sep = "\t",
-    header = FALSE,
-    fill = TRUE,
-    stringsAsFactors = FALSE
-    )
+metacache_plot <- map_dfr(metacache_files, function(f) { metacache_df <- read.table( f, sep = "\t", header = FALSE, fill = TRUE, stringsAsFactors = FALSE )
 
 colnames(metacache_df) <- c("group", "count", "percent")
 
@@ -413,6 +403,7 @@ ggsave(
 
 ### Figure 7
 
+#### Script for target viruses in Illumina and Nanopore-sequenced clinical metagenomics data
 ```{r}
 target_viruses_df <- read.csv(text = "
 sample,Classification tool,virus_reads,total_reads
@@ -615,7 +606,6 @@ p2_target_virus <-ggplot(target_viruses_df_nanopore, aes(x = label, y = logRPM, 
 )
 
 
-
 target_virus <- p1_target_virus + p2_target_virus +
     plot_layout(guides = "collect") &
     theme(legend.position = "bottom")
@@ -635,15 +625,3 @@ ggsave(
 )
 
 ```
-
-
-shared_fill <- scale_fill_manual(
-    name = "Classification tool",
-    values = c(
-        "Kraken2" = "#fdbf6f",
-        "DIAMOND" = "#ccebc5",
-        "MetaCache" = "#cab2d6"
-    ),
-    limits = c("Kraken2", "DIAMOND", "MetaCache"),
-    drop = FALSE
-)
