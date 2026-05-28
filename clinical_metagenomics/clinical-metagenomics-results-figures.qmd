@@ -4,7 +4,7 @@ author: "Sofia Stamouli"
 format: html
 ---
 
-## Figures for Illumina and OXFORD Nanopore-sequenced clinical metagenomics data
+## Figures for Illumina and Oxford Nanopore-sequenced clinical metagenomics data
 
 ### Figure 6
 
