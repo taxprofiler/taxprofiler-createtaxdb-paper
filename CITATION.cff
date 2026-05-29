@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: "nf-core/taxprofiler and nf-core/createtaxdb paper companion analysis"
+version: 0.9.4
+license: "MIT"
+type: dataset
+authors:
+  - given-names: James A.
+    family-names: Fellows Yates
+    orcid: "https://orcid.org/0000-0001-5585-6277"
+    affiliation: MPI-EVA, Leibniz-HKI
+  - given-names: Sofia
+    family-names: Stamouli
+    orcid: "0009-0006-0893-3771"
+    affiliation: Karolinska Institutet
+keywords:
+  - nf-core
+  - nf-core/taxprofiler
+  - nf-core/createtaxdb
+  - metagenomics
+  - classification
+  - paper
+  - databases
