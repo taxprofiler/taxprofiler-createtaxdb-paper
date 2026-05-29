@@ -621,7 +621,7 @@ final_plot_target_virus <- target_virus +
 
 
 ggsave(
-    filename = "target_virus_abundances.jpeg",
+    filename = "target_virus_abundances.png",
     plot = final_plot_target_virus,
     width = 14,
     height = 6,
