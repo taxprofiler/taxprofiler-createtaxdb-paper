@@ -1,0 +1,6 @@
+Bacteria:	163191	(10.34%)
+Viruses:	2661	(0.17%)
+Eukaryota:	18088	(1.15%)
+Archaea:	3	(0.00%)
+Unclassified:	1395004	(88.35%)
+Total:	1578947
