@@ -33,53 +33,22 @@ sample_diamond_map <- c(
     "RSV-25_diamond.diamond"  = "RSV-25"
 )
 
-#Function to read and process the kraken2 report files
-
-read_kraken2_report <- function(file, sample_name) {
-    kraken2_df <- read.table(file, sep = "\t", header = FALSE,
-        col.names = c("percent", "reads_clade", "reads_taxon","rank", "taxid", "name"),fill = TRUE, quote = "")
-    kraken2_df$name   <- trimws(kraken2_df$name)
-    kraken2_df$sample <- sample_name
-    kraken2_df$tool   <- "Kraken2"
-    return(kraken2_df)
-}
-
-kraken2_files <- list("PI2-20"  = "/path/to/PI2-20_k2_pluspf.kraken2.kraken2.report.txt",
-                    "InfB-22" = "/path/to/InfB-22_k2_pluspf.kraken2.kraken2.report.txt",
-                    "InfA-30" = "/path/to/InfA-30_k2_pluspf.kraken2.kraken2.report.txt",
-                    "Met-32"  = "/path/to/InfA-33_k2_pluspf.kraken2.kraken2.report.txt",
-                    "RSA-24"  = "/path/to/RSA-24_k2_pluspf.kraken2.kraken2.report.txt",
-                    "RSV-25"  = "/path/to/RSV-25_k2_pluspf.kraken2.kraken2.report.txt"
+sample_kraken2_map <- c(
+    "PI2-20_k2_pluspf.kraken2.kraken2.report" = "PI2-20",
+    "InfB-22_k2_pluspf.kraken2.kraken2.report" = "InfB-22",
+    "InfA-30_k2_pluspf.kraken2.kraken2.report" = "InfA-30",
+    "InfA-33_k2_pluspf.kraken2.kraken2.report" = "Met-32",
+    "RSA-24_k2_pluspf.kraken2.kraken2.report"  = "RSA-24",
+    "RSV-25_k2_pluspf.kraken2.kraken2.report"  = "RSV-25"
 )
 
-# We will apply the function to each file and combine the results into a single data frame
-kraken2_all_files <- bind_rows(mapply(read_kraken2_report,kraken2_files, names(kraken2_files), SIMPLIFY = FALSE))
-
-# Extract taxonomic groups and calculate percentages for plotting
-kraken2_plot <- kraken2_all_files %>%
-    filter(name %in% c("Viruses", "Bacteria", "Eukaryota", "Archaea", "unclassified")) %>%
-    mutate(
-    group = case_when(
-        name == "unclassified" ~ "Unclassified",
-        TRUE ~ name
-    ),
-    tool = "Kraken2"
-    ) %>%
-select(sample, tool, group, percent)
-
-#Adjust percentages to sum to 100% for each sample
-kraken2_plot <- kraken2_plot %>%
-    group_by(sample) %>%
-    mutate(percent = percent / sum(percent) * 100) %>%
-    ungroup()
-
-#We now created the dataframe for Kraken2 that is going to be used for plotting. We will now do the same for DIAMOND.
 
 #Make sure you are in the correct directory before running the following code.
 
 setwd("path/to/taxpasta")
 diamond_files <- read.table("path/to/taxpasta/diamond_diamond.tsv", sep = "\t", header = TRUE, check.names = FALSE)
 
+kraken2_files <- read.table("path/to/taxpasta/kraken2_k2_pluspf_illumina.tsv", sep = "\t", header = TRUE, check.names = FALSE)
 
 # Assign each row to a taxonomic group
 diamond_assigned <- diamond_files %>%
@@ -95,13 +64,34 @@ diamond_assigned <- diamond_files %>%
         )
 )
 
+kraken2_assigned <- kraken2_files %>%
+    mutate(
+        group = case_when(
+        taxonomy_id == 0~ "Unclassified",
+        grepl("^Viruses", lineage) | name == "Viruses"~ "Viruses",
+        grepl("^cellular organisms;Archaea", lineage) | name == "Archaea"~ "Archaea",
+        grepl("^cellular organisms;Bacteria", lineage) | name == "Bacteria"~ "Bacteria",
+        grepl("^cellular organisms;Eukaryota", lineage) | name == "Eukaryota"~ "Eukaryota",
+        # cellular organisms or rows that don't fit above
+        TRUE~ "Other"
+        )
+)
+
 sample_diamond_cols <- names(sample_diamond_map)
+sample_kraken2_cols <- names(sample_kraken2_map)
 
 # Adjust the df to sum reads per sample per kingdom
 diamond_df <- diamond_assigned %>%
     select(group, all_of(sample_diamond_cols)) %>%
     pivot_longer(all_of(sample_diamond_cols), names_to = "col_name", values_to = "reads") %>%
     mutate(sample = sample_diamond_map[col_name]) %>%
+    group_by(sample, group) %>%
+    summarise(reads = sum(reads), .groups = "drop")
+
+kraken2_df <- kraken2_assigned %>%
+    select(group, all_of(sample_kraken2_cols)) %>%
+    pivot_longer(all_of(sample_kraken2_cols), names_to = "col_name", values_to = "reads") %>%
+    mutate(sample = sample_kraken2_map[col_name]) %>%
     group_by(sample, group) %>%
     summarise(reads = sum(reads), .groups = "drop")
 
@@ -114,11 +104,25 @@ diamond_percentages <- diamond_df %>%
     mutate(tool = "Diamond") %>%
     select(sample, tool, group, percent)
 
+kraken2_percentages <- kraken2_df %>%
+    filter(group != "Other") %>%
+    group_by(sample) %>%
+    mutate(percent = reads / sum(reads) * 100) %>%
+    ungroup() %>%
+    mutate(tool = "Kraken2") %>%
+    select(sample, tool, group, percent)
+
 # Rename percent column and round
 diamond_plot <- diamond_percentages %>%
     rename(percent = percent) %>%
     mutate(percent = round(percent, 2)) %>%
     select(sample, tool, group, percent)
+
+kraken2_plot <- kraken2_percentages %>%
+    rename(percent = percent) %>%
+    mutate(percent = round(percent, 2)) %>%
+    select(sample, tool, group, percent)
+
 
 # Combine Kraken2 and Diamond data for plotting
 
@@ -392,7 +396,7 @@ final_plot <- taxonomic_composition +
 )
 
 ggsave(
-    filename = "taxonomic_distribution.jpeg",
+    filename = "taxonomic_distribution.png",
     plot = final_plot,
     width = 14,
     height = 6,
