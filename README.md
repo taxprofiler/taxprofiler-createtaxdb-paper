@@ -1,4 +1,4 @@
-# taxprofiler-createtaxdb-paper
+# nf-core/taxprofiler and nf-core/createtaxdb paper companion analysis
 
 Supplementary code and notebooks for the nf-core/taxprofiler and nf-core/createtaxdb publication
 
