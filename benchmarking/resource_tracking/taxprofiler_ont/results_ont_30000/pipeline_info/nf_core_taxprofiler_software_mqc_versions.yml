@@ -19,10 +19,16 @@ KAIJU_KAIJU:
 KRAKEN2_KRAKEN2:
   kraken2: 2.1.5
   pigz: 2.8
+KRAKENTOOLS_COMBINEKREPORTS_CENTRIFUGE:
+  combine_kreports.py: 1.2
+KRAKENTOOLS_COMBINEKREPORTS_KRAKEN:
+  combine_kreports.py: 1.2
 KRAKENTOOLS_KREPORT2KRONA:
   kreport2krona.py: 1.2
 KRAKENUNIQ_PRELOADEDKRAKENUNIQ:
   krakenuniq: 1.0.4
+KRONA_KTIMPORTTEXT:
+  krona: 2.8.1
 MELON:
   melon: 0.2.5
 METACACHE_QUERY:
@@ -30,6 +36,8 @@ METACACHE_QUERY:
 MINIMAP2_ALIGN:
   minimap2: 2.29-r1283
   samtools: 1.21
+MOTUS_MERGE:
+  motus: 3.1.0
 MOTUS_PREPLONG:
   motus: 3.1.0
 MOTUS_PROFILE:
@@ -44,10 +52,14 @@ SAMTOOLS_STATS:
   samtools: 1.22.1
 SAMTOOLS_VIEW:
   samtools: 1.22.1
+SYLPHTAX_MERGE:
+  sylph-tax: 1.2.0
 SYLPHTAX_TAXPROF:
   sylph-tax: 1.2.0
 SYLPH_PROFILE:
   sylph: 0.7.0
+TAXPASTA_MERGE:
+  taxpasta: 0.7.0
 Workflow:
     nf-core/taxprofiler: v2.0.0-gfa1aab0
     Nextflow: 25.10.4
