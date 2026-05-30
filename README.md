@@ -16,9 +16,10 @@ For the resource usage/benchmarking analyses, see the following notebooks:
    2. [benchmarking/taxprofiler-data-benchmarking-execution.qmd](benchmarking/taxprofiler-data-benchmarking-execution.qmd)
    3. [benchmarking/taxprofiler-results-benchmarking-resourceusage.qmd](benchmarking/taxprofiler-results-benchmarking-resourceusage.qmd)
 
+## Clinical metagenomics example use casestudy 
 
-## Clinical metagenomics study case
+For the example clinical metagenomics example use case, see the following notebooks:
 
 1. [clinical_metagenomics/clinical_metagenomics_database_construction.qmd](clinical_metagenomics/clinical_metagenomics_database_construction.qmd)
-2. [clinical_metagenomics/clinical_metagenomics_taxprofiler_run.qmd](clinical_metagenomics/clinical_metagenomics_taxprofile_run.qmd)
+2. [clinical_metagenomics/clinical_metagenomics_taxprofiler_run.qmd](clinical_metagenomics/clinical_metagenomics_taxprofiler_run.qmd)
 3. [clinical_metagenomics/clinical-metagenomics-results-figures.qmd](clinical_metagenomics/clinical-metagenomics-results-figures.qmd)
