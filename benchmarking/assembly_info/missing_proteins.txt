@@ -1,0 +1,1 @@
+Protein file missing for: ncbi_genomes/ncbi_dataset/data/*/protein.fa

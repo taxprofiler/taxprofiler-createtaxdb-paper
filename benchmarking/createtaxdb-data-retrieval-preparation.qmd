@@ -46,7 +46,7 @@ Download the relevant assembly summary files from the NCBI Genomes RefSeq databa
 ```{bash}
 #| eval: false
 ## assuming we are already in the benchmarking/ directory 
-mkdir assembly_info/
+mkdir -p assembly_info/
 curl -o assembly_info/assembly_summary_bacteria.tsv https://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
 curl -o assembly_info/assembly_summary_archaea.tsv https://ftp.ncbi.nlm.nih.gov/genomes/refseq/archaea/assembly_summary.txt
 curl -o assembly_info/assembly_summary_viral.tsv https://ftp.ncbi.nlm.nih.gov/genomes/refseq/viral/assembly_summary.txt
@@ -81,7 +81,6 @@ raw_vir <- data.table::fread('assembly_info/assembly_summary_viral.tsv.gz') |>
 To ensure we can fit the downloaded genomes to our infrastructure, we can use the genome size as a very rough estimate of the size of resulting FASTA files.
 
 ```{r}
-#| eval: false
 raw_bac |>
   as_tibble() |>
   select(genome_size) |>
@@ -107,11 +106,16 @@ raw_vir |>
 We would need around 2 TB of HDD space to download all assembly types.
 This would be too large for our infrastructure in this case, so we will need to filter these down.
 
-However, first as there are very few archaeal genomes, we will combine the two tables
+However, first as there are very few archaeal genomes, we will combine the three tables.
 
 ```{r}
 raw <- bind_rows(raw_arc, raw_bac, raw_vir)
+```
 
+And save the file.
+
+```{r}
+#| eval: false
 raw |> 
   filter(`#assembly_accession` %in% bacarcvir$accession) |> 
   as_tibble() |> 
@@ -120,12 +124,13 @@ raw |>
 
 ### Filtering
 
-We can now estimate the storage requirements based on different filtering criteria
+We can now estimate the storage requirements based on different filtering criteria.
 
 First we can filter to just completed genomes, chromosome-level assemblies or higher. 
 
 ```{r}
-#| eval: false
+raw <- read_tsv('assembly_info/assembly_summary_final.tsv.gz')
+
 ## Complete genome only
 complete_only <- raw |>
   as_tibble() |>
@@ -139,10 +144,9 @@ complete_chromosome_only <- raw |>
   arrange(organism_name)
 ```
 
-To make this easier across different filtering mechanisms, we can define a small function to get the size:
+To make this easier across different filtering mechanisms, we can define a small function to get the size.
 
 ```{r}
-#| eval: false
 estimate_size <- function(tbl, name){
   amt <- tbl |>
     ungroup() |>
@@ -155,10 +159,9 @@ estimate_size <- function(tbl, name){
 }
 ```
 
-If we were to download just all genomes in the RefSeq Genome collection listed as chromosome level or higher, we would expect: 
+If we were to download just all genomes in the RefSeq Genome collection listed as chromosome level or higher, we would expect.
 
 ```{r}
-#| eval: false
 estimate_size(complete_chromosome_only, 'Complete or chromosome-level only')
 estimate_size(complete_only, 'Complete only')
 ```
@@ -166,7 +169,6 @@ estimate_size(complete_only, 'Complete only')
 This is still rather high, but we can know that the number of genomes for each organism is very unequally distributed.
 
 ```{r}
-#| eval: false
 ## One complete genome, on strain per organism
 complete_only_sampled_strain <- raw |>
   as_tibble() |>
@@ -212,25 +214,30 @@ We use can use the `datasets` package from NCBI to get a more realistic estimate
 First we need to make a file of just accessions.
 
 ```{r}
+#| eval: false
 complete_chromosome_only_sampled_species |> 
   pull(`#assembly_accession`) |> 
   as_tibble() |> 
-  write_tsv('assembly_info/bacarcvir_accessions.txt', col_names = FALSE)
+  write_tsv('assembly_info/bacarcvir_accessions.txt.gz', col_names = FALSE)
 ```
 
 To have all the information in assembly summary style
 
 ```{r}
-bacarcvir <- read_tsv('assembly_info/bacarcvir_accessions.txt', col_names = c('accession'))
+bacarcvir <- read_tsv('assembly_info/bacarcvir_accessions.txt.gz', col_names = c('accession'))
 ```
 
-We can then pass this to NCBI datasets
+We can then pass this to NCBI datasets.
 
 ```{bash}
 #| eval: false
 datasets download genome accession --inputfile assembly_info/bacarcvir_accessions.txt --include genome,protein --preview
 ```
+
+The output being:
+
 ```{txt}
+#| eval: false
 Collecting 29,971 genome records [------------------------------------------------]   0% 0/29971
 Collecting 29,971 genome records [===============================================>] 100% 29970/29971
 {"resource_updated_on":"2026-03-16T15:06:00Z","record_count":29970,"estimated_file_size_mb":33832,"included_data_files":{"all_genomic_fasta":{"file_count":29976,"size_mb":20595.738},"prot_fasta":{"file_count":29810,"size_mb":13253.852}}}
@@ -241,23 +248,22 @@ In total the estimated size of the download as reported by `estimated_file_size_
 
 ### Downloading
 
-To download we run without the same command but without `--preview` flag, but dehydrated - [as requested by NCBI](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/how-tos/genomes/large-download/), as we are downloading a large number of files
+To download we run without the same command but without `--preview` flag, but dehydrated - [as requested by NCBI](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/how-tos/genomes/large-download/), as we are downloading a large number of files.
 
 ```{bash}
 #| eval: false
 datasets download genome accession --inputfile bacarcvir_accessions.txt --include genome,protein --dehydrated
 ```
 
-Then re-hydrate
+Then re-hydrate.
 
 ```{bash}
 #! eval: false
-
 unzip ncbi_dataset.zip -d ncbi_genomes
 datasets rehydrate --directory ncbi_genomes
 ```
 
-During this downloading (and after a couple of re-tries), the following files could consistently not be retrieved due to FTP gateway 404 errors.
+During this downloading (and after a couple of re-tries), the following files could consistently not be retrieved due to FTP gateway 404 errors. Output:
 
 ```{txt}
 Error: 
@@ -267,29 +273,28 @@ Error (processRequest, ncbi_genomes/ncbi_dataset/data/GCF_040500375.1/protein.fa
 Error (processRequest, ncbi_genomes/ncbi_dataset/data/GCF_040500375.1/GCF_040500375.1_UT-SAD-23_genomic.fna): File unavailable ([gateway] 404 Not Found): ncbi_genomes/ncbi_dataset/data/GCF_040500375.1/GCF_040500375.1_UT-SAD-23_genomic.fna
 ```
 
-We can add these to an 'exclude' list
+We can add these to an 'exclude' list.
 
 ```{r}
 list_toexclude <- c('GCF_049995385.1', 'GCF_040500375.1' )
 ```
 
-Furthermore, not all genomes have `protein.faa` files available, therefore we find which directories did not report these:
+Furthermore, not all genomes have `protein.faa` files available, therefore we find which directories did not report these.
 
 ```{bash}
 #! eval: false
-
 for dir in ncbi_genomes/ncbi_dataset/data/*/; do
   [ ! -f ${dir}protein.faa ] && echo "Protein file missing for: ${dir}protein.fa" >> assembly_info/missing_proteins.txt
 done
 ```
 
-
 Therefore for these genomes without a `protein.faa` file, we will remove the directories to ensure we have one-to-one parity of nucleotide to protein FASTAs.
 
 ```{bash}
 #! eval: false
-
-while read line; do rm -r $(dirname ${line##*: }); done <assembly_info/missing_proteins.txt
+while read line; do 
+  rm -r $(dirname ${line##*: }); 
+done <assembly_info/missing_proteins.txt
 ```
 
 Then we need to repair the names of the re-used 'protein' name:
@@ -311,7 +316,7 @@ Of these, the following three genomes gave errors of not having a protein annota
 list_toexclude <- append(list_toexclude, c('GCF_041505265', 'GCF_041505935'))
 ```
 
-Therefore I can also manually delete these genomes entirely:
+Therefore I can also manually delete these genomes entirely.
 
 ```{bash}
 #! eval: false
@@ -320,12 +325,15 @@ rm -r ncbi_genomes/ncbi_dataset/data/GCF_041505265.1/
 rm -r ncbi_genomes/ncbi_dataset/data/GCF_041505935.1/
 ```
 
-After downloading and cleaning, we have the following number genomes:
+After downloading and cleaning, we have the following number genomes.
 
 ```{bash}
 #! eval: false
 find ncbi_genomes/ -name '*.fna' -type f | wc -l
 ```
+
+Output:
+
 ```{txt}
 #! eval: false
 29806
@@ -335,13 +343,16 @@ find ncbi_genomes/ -name '*.fna' -type f | wc -l
 #! eval: false
 find ncbi_genomes/ -name '*.faa' -type f | wc -l
 ```
+
+Output:
+
 ```{txt}
 #! eval: false
 29806
 ```
 
 I assume the drop from 29,971 to 29,806 genomes is due to either withdrawn assembly accessions.
-However this is hard to debug...
+However this is hard to debug.
 
 In the end our harddrive space usage was:
 
@@ -349,6 +360,9 @@ In the end our harddrive space usage was:
 #! eval: false
 du -hs ncbi_genomes/
 ```
+
+Output:
+
 ```{txt}
 #! eval: false
 98G     ncbi_genomes/
@@ -386,8 +400,8 @@ final_paths_all <- final_nucl_paths |>
 ```
 
 Finally, we need to retrieve the `taxid` for each accession.
-We can retrieve this information from the original assembly summary file,
-and left join to the list of file paths as the left hand file (as we are have extra assemblies in the combined `assembly_summary.txt` file not represented in the downloaded files, as noted above).
+We can retrieve this information from the original assembly summary file, and left join to the list of file paths as the left hand file.
+As we are have extra assemblies in the combined `assembly_summary.txt` file not represented in the downloaded files, as noted above.
 
 ```{r}
 taxids <-raw |> 
@@ -398,7 +412,12 @@ taxids <-raw |>
 samplesheet <- final_paths_all |> 
   left_join(taxids) |> 
   select(id, taxid, fasta_dna, fasta_aa)
+```
 
+And save.
+
+```{r}
+#| eval: false
 write_csv(samplesheet, 'samplesheets/createtaxdb-samplesheet.csv')
 ```
 
@@ -407,7 +426,7 @@ write_csv(samplesheet, 'samplesheets/createtaxdb-samplesheet.csv')
 Note we can also use a different join to find the missing genomes that didn't download.
 
 ```{r}
-original_accs <- read_tsv('assembly_info/bacarcvir_accessions.txt', col_names = 'id')
+original_accs <- read_tsv('assembly_info/bacarcvir_accessions.txt.gz', col_names = 'id')
 original_accs |> anti_join(final_nucl_paths)
 ```
 
@@ -423,7 +442,7 @@ This is important as metagenomic database construction is a major issue.
 I will load the file-system specific modified samplesheet from above.
 
 ```{r}
-samplesheet_raven <- read_csv('createtaxdb-samplesheet_raven.csv')
+samplesheet_raven <- read_csv('samplesheets/createtaxdb-samplesheet_raven.csv')
 ```
 
 This has 29,806 genomes.
@@ -437,7 +456,8 @@ I will randomly subset to the following number of genomes:
 - 1,000
 
 ```{r}
-for(i in c(20000,10000,5000,2000,1000)){
+#| eval: false
+for (i in c(20000,10000,5000,2000,1000) ) {
   samplesheet_raven |> sample_n(i) |> write_csv(paste0('createtaxdb-samplesheet_raven', i, '.csv'))
 }
 ```

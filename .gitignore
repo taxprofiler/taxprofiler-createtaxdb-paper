@@ -57,3 +57,6 @@ ncbi_dataset*
 .nextflow*
 nf-*tsv
 reference_genomes/
+
+benchmkaring/taxprofiler/
+benchmarking/createtaxdb/

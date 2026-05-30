@@ -62,43 +62,39 @@ We can download the NCBI genome-sizes file:
 
 ```{bash}
 #| eval: false
-
 curl -o auxiliary_files/species_genome_size.txt https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/species_genome_size.txt
 gzip species_genome_size.txt
 ```
 
 ### Create nucl2taxid
 
-To create a Kraken2 and co like `nucl2taxid` file, you can use the following `awk` command
+To create a Kraken2 and co like `nucl2taxid` file, you can use the following `awk` command.
 
 ```{bash}
 #| eval: false
-
 awk -v OFS='\t' 'NR>1 {print $2, $3}' auxiliary_files/nucl_gb.accession2taxid > auxiliary_files/nucl2taxid.map
 ```
 
 ### Create prot2taxid
 
-To create a DIAMOND compatible `prot2taxid` file, you can use a similar `awk` command above, just retaining the header
+To create a DIAMOND compatible `prot2taxid` file, you can use a similar `awk` command above, just retaining the header.
 
 ```{bash}
 #| eval: false
-
 awk -v OFS='\t' '{print $2, $3}' auxiliary_files/prot.accession2taxid > auxiliary_files/prot2taxid.map
 ```
 
 ### Download MALT db
 
-To get the MALT taxonomy mappings, we download from the MEGAN website, and unzip
+To get the MALT taxonomy mappings, we download from the MEGAN website, and unzip.
 
 ```{bash}
 #| eval: false
-
 curl -o auxiliary_files/megan-nucl-Feb2022.db.zip https://software-ab.cs.uni-tuebingen.de/download/megan6/megan-nucl-Feb2022.db.zip
 ```
 
 ::: {.callout-warning}
-At time of analysis, website was unavailable, so not excluded.
+At time of analysis, website was unavailable, so not included in analyses!
 :::
 
 ### Sylph Taxonomy
@@ -110,7 +106,7 @@ This is taxonomy file is currently supplied to nf-core/taxprofiler rather than n
 :::
 
 Instead, the`sylph` assigns to each _filename_ a character-based taxonomy string. 
-We will then need to generate this manually for nf-core/taxprofiler
+We will then need to generate this manually for nf-core/taxprofiler.
 
 Fortunately a combination of `taxonkit` provides similar functionality for us to generate this from our existing samplesheet (see createtaxdb-data-retrieval-preparation.qmd) and NCBI taxonomy files we downloaded above.
 

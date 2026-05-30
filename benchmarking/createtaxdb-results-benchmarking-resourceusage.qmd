@@ -37,6 +37,8 @@ sessionInfo()
 
 ## Disk space usage
 
+### Data loading
+
 One major factor into the creation of metagenomic profiling databases is the size of the output files.
 In some cases these can be notoriously large, without parameter optimisation.
 
@@ -44,10 +46,10 @@ Using the output of `du` on each of the results directories, we can plot the amo
 
 First we can translate the Megabyte output from `du` to bytes (for later conversion to Gigabytes), and remove non-database output directories from the lists.
 
-<!--TODO, get size of input genomes? -->
-
 ```{r}
-data_disk_raw <- read_tsv('resource_tracking/createtaxdb/createtaxdb_resource_usage_raw.tsv', col_names = c('directory_size_bytes', 'directory'))
+data_disk_raw <- read_tsv('resource_tracking/createtaxdb/createtaxdb_resource_usage_raw.tsv', 
+                          col_names = c('directory_size_bytes', 'directory')
+                          )
 
 data_disk_clean <- data_disk_raw |>
   separate(directory, into = c('genomes', 'tool'), sep = '/') |> 
@@ -60,7 +62,7 @@ data_disk_clean <- data_disk_raw |>
   )
 ```
 
-
+Set some custom colours for downstream plotting.
 
 ```{r}
 palette_custom_tool = c(
@@ -75,9 +77,19 @@ palette_custom_tool = c(
   "metacache" = "#cab2d6",
   "sylph" = "#6a3d9a"
 )
+```
 
+### Plotting
 
-figure_disk_usage <- ggplot(data_disk_clean, aes(x = nr_genomes, y = directory_size_bytes / 1024000, colour = tool, shape = tool)) +
+And plot disk usage.
+
+```{r}
+figure_disk_usage <- ggplot(data_disk_clean, 
+                            aes(x = nr_genomes, 
+                                y = directory_size_bytes / 1024000, 
+                                colour = tool, 
+                                shape = tool)
+                            ) +
   geom_point(size = 2) +
   geom_line() +
   scale_shape_manual(values = 1:10) +
@@ -97,7 +109,6 @@ figure_disk_usage
 We can see that KrakenUniq is an outlier, we can plot two varints of this to make it easier to see the usage of the other tools.
 
 Filter out KrakenUniq in a second plot:
-
 
 ```{r}
 figure_disk_usage_filtered <- ggplot(data_disk_clean |> filter(tool != 'krakenuniq'), aes(x = nr_genomes, y = directory_size_bytes / 1024000, colour = tool, shape = tool)) +
@@ -135,7 +146,6 @@ figure_disk_usage_scaled <- ggplot(data_disk_clean, aes(x = nr_genomes / 1000, y
 
 figure_disk_usage_scaled
 ```
-
 
 ## Compute resource usage
 
@@ -197,7 +207,8 @@ figure_memory_usage <- ggplot(data_tracefiles_clean, aes(x = n_genomes / 1000, y
 
 figure_memory_usage
 ```
-To see more detail of the bulk of the tools, we can scale the Y axis
+
+To see more detail of the bulk of the tools, we can scale the Y axis.
 
 ```{r}
 figure_memory_usage_scaled <- ggplot(data_tracefiles_clean, aes(x = n_genomes / 1000, y = peak_vmem_value_gb, color = process, shape = process)) +
@@ -219,8 +230,7 @@ figure_memory_usage_scaled
 
 The decrease in memory usage in KMCP INDEX corresponds to a change in the auto-selected number of index files (6-7, up to 25).
 
-Or produce a second plot removing the outliers
-
+Or produce a second plot removing the outliers.
 
 ```{r fig.width=10}
 figure_memory_usage_filtered <- ggplot(data_tracefiles_clean |> filter(!process %in% c('CENTRIFUGE_BUILD', 'KRAKENUNIQ_BUILD')), aes(x = n_genomes / 1000, y = peak_vmem_value_gb, color = process, shape = process)) +
@@ -241,7 +251,10 @@ figure_memory_usage + figure_memory_usage_filtered + plot_annotation(tag_levels 
 
 ## Combined Plots
 
+For the final figure, we will use the two scale plots.
+
 ```{r fig.width=6, fig.height=8}
+#| eval: false
 final_resource_figure <- figure_memory_usage_scaled / figure_disk_usage_scaled + plot_annotation(tag_levels = 'A')
 final_resource_figure
 

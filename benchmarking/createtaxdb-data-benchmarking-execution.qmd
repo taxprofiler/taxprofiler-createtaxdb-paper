@@ -34,40 +34,7 @@ mkdir createtaxdb
 cd createtaxdb/
 ```
 
-Example command:
-
-```{bash}
-#| eval: false
-nextflow run nf-core/createtaxdb \
- -r 3.0.0 \
- --input ../samplesheets/createtaxdb-samplesheet_raven30000.csv \
- -profile mpcdf,raven \
- -name benchmark_30000 \
- --outdir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/createtaxdb/results_30000/ \
- --dbname benchmark_30000 \
- --accession2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/nucl_gb.accession2taxid \
- --prot2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/prot2taxid.map \
- --nucl2taxid /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/nucl2taxid.map \
- --nodesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/nodes.dmp \
- --namesdmp /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/names.dmp \
- --genomesizes /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/species_genome_size.txt.gz \
- --build_bracken \
- --build_centrifuge \
- --build_diamond \
- --build_ganon \
- --build_kaiju \
- --build_kmcp \
- --build_kraken2 \
- --build_krakenuniq \
- --build_sylph \
- --build_metacache \
- --generate_downstream_samplesheets \
- --generate_pipeline_samplesheets taxprofiler \
- -w work/ \
- -c custom.config
-```
-
-The final custom config (`custom.config`) optimised for use on this particular infrastructure) on the two infrastructures used for testing was:
+The final custom config files optimised for use on this particular infrastructure were for `custom_raven.config`:
 
 ```{groovy}
 process {
@@ -140,7 +107,7 @@ process {
 
 ```
 
-and `custom_small.config`
+and `custom_raven_small.config`:
 
 ```{groovy}
 process {
@@ -172,9 +139,9 @@ process {
 }
 ```
 
-## Harddrive usage
+## Hard drive usage
 
-The resulting results directory of each run was was
+The resulting results directory of each run are as follows.
 
 ### 30k
 
@@ -208,14 +175,19 @@ nextflow run nf-core/createtaxdb \
  --generate_downstream_samplesheets \
  --generate_pipeline_samplesheets taxprofiler \
  -w work/ \
- -c custom.config
+ -c custom_raven.config
 ```
 
-Results directory:
+Results directory size calculations.
 
 ```{bash}
 #| eval: false
-$ du -h --max-depth 1 results_30000/
+du -h --max-depth 1 results_30000/
+```
+
+Output:
+
+```{txt}
 2.3M    results_30000/multiqc
 1.5K    results_30000/downstream_samplesheets
 29G     results_30000/kaiju
@@ -230,7 +202,6 @@ $ du -h --max-depth 1 results_30000/
 199G    results_30000/bracken
 32G     results_30000/centrifuge
 1.8T    results_30000
-
 ```
 
 ### 20k
@@ -265,14 +236,19 @@ nextflow run nf-core/createtaxdb \
  --generate_downstream_samplesheets \
  --generate_pipeline_samplesheets taxprofiler \
  -w work/ \
- -c custom.config
+ -c custom_raven.config
 ```
 
-Results directory:
+Results directory size calculations.
 
 ```{bash}
 #| eval: false
-$ du -h --max-depth 1 results_20000/
+du -h --max-depth 1 results_20000/
+```
+
+Output:
+
+```{txt}
 2.3M    results_20000/multiqc
 1.5K    results_20000/downstream_samplesheets
 20G     results_20000/kaiju
@@ -290,7 +266,6 @@ $ du -h --max-depth 1 results_20000/
 ```
 
 ### 10k
-
 
 Command:
 
@@ -322,14 +297,19 @@ nextflow run nf-core/createtaxdb \
  --generate_downstream_samplesheets \
  --generate_pipeline_samplesheets taxprofiler \
  -w work/ \
- -c custom.config
+ -c custom_raven.config
 ```
 
-Results directory:
+Results directory size calculations.
 
 ```{bash}
 #| eval: false
-$ du -h --max-depth 1 results_10000/
+du -h --max-depth 1 results_10000/
+```
+
+Output:
+
+```{txt}
 2.3M    results_10000/multiqc
 1.5K    results_10000/downstream_samplesheets
 9.9G    results_10000/kaiju
@@ -380,14 +360,19 @@ nextflow run nf-core/createtaxdb \
  --generate_downstream_samplesheets \
  --generate_pipeline_samplesheets taxprofiler \
  -w work/ \
- -c custom_small.config
+ -c custom_raven_small.config
 ```
 
-Results directory:
+Results directory size calculations.
 
 ```{bash}
 #| eval: false
-$ du -h --max-depth 1 results_5000/
+du -h --max-depth 1 results_5000/
+```
+
+Output:
+
+```{txt}
 2.3M    results_5000/multiqc
 1.5K    results_5000/downstream_samplesheets
 5.0G    results_5000/kaiju
@@ -406,7 +391,6 @@ $ du -h --max-depth 1 results_5000/
 ```
 
 ### 2k
-
 
 Command:
 
@@ -438,14 +422,19 @@ nextflow run nf-core/createtaxdb \
  --generate_downstream_samplesheets \
  --generate_pipeline_samplesheets taxprofiler \
  -w work/ \
- -c custom_small.config
+ -c custom_raven_small.config
 ```
 
-Results directory:
+Results directory size calculations.
 
 ```{bash}
 #| eval: false
-$ du -h --max-depth 1 results_2000/
+du -h --max-depth 1 results_2000/
+```
+
+Output:
+
+```{txt}
 2.3M    results_2000/multiqc
 1.5K    results_2000/downstream_samplesheets
 2.4G    results_2000/kaiju
@@ -495,14 +484,19 @@ nextflow run nf-core/createtaxdb \
  --generate_downstream_samplesheets \
  --generate_pipeline_samplesheets taxprofiler \
  -w work/ \
- -c custom_small.config
+ -c custom_raven_small.config
 ```
 
-Results directory:
+Results directory size calculations.
 
 ```{bash}
 #| eval: false
-$ du -h --max-depth 1 results_1000/
+du -h --max-depth 1 results_1000/
+```
+
+Output
+
+```{txt}
 2.3M    results_1000/multiqc
 1.5K    results_1000/downstream_samplesheets
 1.4G    results_1000/kaiju
@@ -526,7 +520,7 @@ To aggregate all the results directory `du` commands all into one file, we can u
 
 ```{bash}
 #| eval: false
-## WHILE IN `createtaxdb/`
+## Reminder, must be while in `createtaxdb/`
 mkdir -p ../resource_tracking/createtaxdb/
 for i in results_*; do du --max-depth 1 $i >> ../resource_tracking/createtaxdb/createtaxdb_resource_usage_raw.tsv; done
 for i in results_*; do du -h --max-depth 1 $i >> ../resource_tracking/createtaxdb/createtaxdb_resource_usage_humanreadable.tsv; done
@@ -535,6 +529,8 @@ for i in results_*; do du -h --max-depth 1 $i >> ../resource_tracking/createtaxd
 To get all trace files
 
 ```{bash}
+#| eval: false
+## Reminder, must be while in `createtaxdb/`
 for i in results_*; do
   mkdir ../resource_tracking/createtaxdb/"$i"/
   cp -r "$i"/pipeline_info/ ../resource_tracking/createtaxdb/"$i"/pipeline_info/
