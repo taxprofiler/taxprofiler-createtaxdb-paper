@@ -14,9 +14,18 @@ We compare resource usage compared between Illumina short-read and Oxford Nanopo
 
 For the Illumina data, this was a single palaeofaeces ancient DNA sample where the same sample was sequenced at the following depths:
 
-  - `_sma` shallow sequencing depth library at 20 million reads
-  - `_med` middle-sequencing depth at 100 million
-  - `_large` deep sequencing depth at 200 million reads
+  - `2604_sma` shallow sequencing depth library at 20 million reads
+  - `2604_med` middle-sequencing depth at 100 million
+  - `2604_lar` deep sequencing depth at 200 million reads
+  
+
+For the Oxford Nanopore data, this was a single activated sludge sample, that was sequenced across five flowcells:
+
+  - `24_A46` sequenced at 2,463,130 reads
+  - `35_A50` sequenced at 3,568,397 reads
+  - `40_A49` sequenced at 4,022,194 reads
+  - `43_A47` sequenced at 4,329,789 reads
+  - `52_A48` sequenced at 5,235,163 reads
 
 Raw data was gathered through:
 

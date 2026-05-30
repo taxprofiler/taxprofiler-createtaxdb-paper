@@ -520,7 +520,7 @@ To aggregate all the results directory `du` commands all into one file, we can u
 
 ```{bash}
 #| eval: false
-## Reminder, must be while in `createtaxdb/`
+## Reminder, must be in `createtaxdb/`
 mkdir -p ../resource_tracking/createtaxdb/
 for i in results_*; do du --max-depth 1 $i >> ../resource_tracking/createtaxdb/createtaxdb_resource_usage_raw.tsv; done
 for i in results_*; do du -h --max-depth 1 $i >> ../resource_tracking/createtaxdb/createtaxdb_resource_usage_humanreadable.tsv; done
@@ -530,9 +530,17 @@ To get all trace files
 
 ```{bash}
 #| eval: false
-## Reminder, must be while in `createtaxdb/`
+## Reminder, must be in `createtaxdb/`
 for i in results_*; do
   mkdir ../resource_tracking/createtaxdb/"$i"/
   cp -r "$i"/pipeline_info/ ../resource_tracking/createtaxdb/"$i"/pipeline_info/
 done
+```
+
+### Samplesheets
+
+
+
+```{bash}
+mkdir samplesheets/
 ```

@@ -20,7 +20,6 @@ We will benchmarking with v2.1.0 of nf-core/taxprofiler with Nextflow version 25
 
 ```{bash}
 #| eval: false
-
 nextflow pull nf-core/taxprofiler -r 2.0.0
 ```
 
@@ -33,52 +32,264 @@ Make a fresh screen session for safety
 screen -R txp
 ```
 
-## Execution (Ancient DNA Illumina)
+### Configuration files
 
-We can then run nf-core/taxprofiler on this dataset of 3 differently depth-sequenced samples with the databases we generated previously.  
+The final config files used were as follows.
 
-### 30k
+#### Raven
 
-(Note: we had to run on different infrastructure due to wall-time restrictions, compared to the smaller database runs)
+For large databases `custom.config`:
 
-For example, for the full dataset of just under ~30,000 genomes:
-
-```{bash}
-#| eval: false
-nextflow run nf-core/taxprofiler \
- -r 2.0.0 \
- --input /vol/permanent/benchmarking/samplesheets/taxprofiler-samplesheet_denbi.csv \
- --databases /vol/permanent/benchmarking/samplesheets/taxprofiler-databases_denbi30000.csv \
- -name txp_benchmark_30000 \
- --outdir /vol/permanent/benchmarking/taxprofiler/results_illumina_30000/ \
- --perform_shortread_qc \
- --shortread_qc_dedup \
- --perform_shortread_complexityfilter \
- --perform_shortread_redundancyestimation \
- --perform_shortread_hostremoval \
- --hostremoval_reference /vol/permanent/benchmarking/reference/human-t2t-hla.fa.gz \
- --shortread_hostremoval_index /vol/permanent/benchmarking/reference/ \
- --run_bracken \
- --run_centrifuge \
- --run_diamond \
- --run_ganon \
- --run_kaiju \
- --run_kmcp \
- --run_kraken2 \
- --run_krakenuniq \
- --run_melon \
- --run_metacache \
- --run_metaphlan \
- --run_motus \
- --run_sylph \
- --run_profile_standardisation \
- --run_krona \
- --taxpasta_taxonomy_dir /vol/permanent/benchmarking/auxiliary_files/ \
- --sylph_taxonomy /vol/permanent/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
- -c custom.config
+```{groovy}
+process {
+	withName: 'FASTP_PAIRED' {
+		cpus   = 24
+		memory = '110.GB'
+	}
+	withName: 'PORECHOP_ABI' {
+		cpus = 72
+		memory = '240.GB'
+	}
+	withName: 'NANOQ' {
+		cpus = 24
+		memory = '110.GB'
+	}
+	withName: 'NONPAREIL_NONPAREIL' {
+		ext.args = "-k 15"
+	} 
+        withName: 'KAIJU_KAIJU' {
+                memory = '100.GB'
+                cpus   = '18'
+        }
+        withName: 'GANON_CLASSIFY' {
+                memory = '72.GB'
+                cpus   = '18'
+        }
+	withName: 'KMCP_PROFILE' {
+		memory = '240.GB'
+		cpus = '72'
+		time = '24.h'
+	}
+        withName: 'KRAKEN2_KRAKEN2'{
+                memory = '240.GB'
+                cpus   = '72'
+        }
+        withName: 'BRACKEN_BRACKEN'{
+                memory = '240.GB'
+                cpus   = '72'
+        }
+        withName: 'METACACHE_QUERY' {
+                memory = '240.GB'
+                cpus = '72'
+        }
+        withName: 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ' {
+                memory = '2047.GB'
+                cpus = '72'
+                time = '24.h'
+        }
+        withName: 'CENTRIFUGE_CENTRIFUGE' {
+                maxForks = 1
+		memory = '72.GB'
+                cpus = '18'
+                time = '24.h'
+        }
+	withName: 'TAXPASTA_MERGE' {
+		errorStrategy = 'ignore'
+		memory = '24.GB'
+		cpus = '1'
+		time = '4.h'
+	}
+}
 ```
 
-The configuration file used was:
+For small database runs `custom_small.config`
+
+```{groovy}
+process {
+	withName: 'FASTP_PAIRED' {
+		cpus   = 24
+		memory = '90.GB'
+	}
+        withName: 'PORECHOP_ABI' {
+                cpus = 24
+                memory = '110.GB'
+        }
+        withName: 'NANOQ' {
+                cpus = 24
+                memory = '110.GB'
+        }
+	withName: 'SAMTOOLS_STATS' {
+		memory = '32.GB'
+	}
+	withName: 'NONPAREIL_NONPAREIL' {
+		ext.args = "-k 15"
+	} 
+        withName: 'KAIJU_KAIJU' {
+                memory = '50.GB'
+                cpus   = '30'
+        }
+        withName: 'GANON_CLASSIFY' {
+                memory = '15.GB'
+                cpus   = '30'
+        }
+	withName: 'DIAMOND_BLASTX' {
+		memory = '50.GB'
+		cpus = '30'
+	}
+	withName: 'KMCP_PROFILE' {
+		memory = '50.GB'
+		cpus = '30'
+		time = '24.h'
+	}
+	withName: 'KMCP_SEARCH' {
+		memory = '50.GB'
+		cpus = '30'
+	}
+        withName: 'KRAKEN2_KRAKEN2'{
+                memory = '50.GB'
+                cpus   = '30'
+        }
+        withName: 'BRACKEN_BRACKEN'{
+                memory = '10.GB'
+                cpus   = '30'
+        }
+        withName: 'METACACHE_QUERY' {
+                memory = '100.GB'
+                cpus = '30'
+        }
+        withName: 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ' {
+                memory = '500.GB'
+                cpus = '72'
+                time = '24.h'
+        }
+        withName: 'CENTRIFUGE_CENTRIFUGE' {
+                maxForks = 1
+		memory = '20.GB'
+                cpus = '30'
+                time = '24.h'
+        }
+	withName: 'TAXPASTA_MERGE' {
+		errorStrategy = 'ignore'
+		memory = '24.GB'
+		cpus = '1'
+		time = '4.h'
+	}
+	withName: 'MOTUS_PROFILES' {
+		memory = '50.GB'
+		cpus = 30
+	}
+	withName: 'SYLPH_PROFILE'{
+		memory = '30.GB'
+		cpus = 30
+	}
+	withName: 'MELON' {
+		memory = '64.GB'
+		cpus = 30
+	}
+	withName: 'MOTUS_PREPLONG' {
+		memory = '8.GB'
+		cpus = 8
+		time = '16.h'
+	}
+	
+}
+```
+
+For small ONT runs:
+
+```{groovy}
+process {
+	withName: 'FASTP_PAIRED' {
+		cpus   = 24
+		memory = '90.GB'
+	}
+        withName: 'PORECHOP_ABI' {
+                cpus = 24
+                memory = '110.GB'
+        }
+        withName: 'NANOQ' {
+                cpus = 24
+                memory = '110.GB'
+        }
+	withName: 'SAMTOOLS_STATS' {
+		memory = '32.GB'
+	}
+	withName: 'NONPAREIL_NONPAREIL' {
+		ext.args = "-k 15"
+	} 
+        withName: 'KAIJU_KAIJU' {
+                memory = '50.GB'
+                cpus   = '30'
+        }
+        withName: 'GANON_CLASSIFY' {
+                memory = '15.GB'
+                cpus   = '30'
+        }
+	withName: 'DIAMOND_BLASTX' {
+		memory = '50.GB'
+		cpus = '30'
+	}
+	withName: 'KMCP_PROFILE' {
+		memory = '50.GB'
+		cpus = '30'
+		time = '24.h'
+	}
+	withName: 'KMCP_SEARCH' {
+		memory = '50.GB'
+		cpus = '30'
+	}
+        withName: 'KRAKEN2_KRAKEN2'{
+                memory = '100.GB'
+                cpus   = '30'
+        }
+        withName: 'BRACKEN_BRACKEN'{
+                memory = '10.GB'
+                cpus   = '30'
+        }
+        withName: 'METACACHE_QUERY' {
+                memory = '100.GB'
+                cpus = '30'
+        }
+        withName: 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ' {
+                memory = '500.GB'
+                cpus = '72'
+                time = '24.h'
+        }
+        withName: 'CENTRIFUGE_CENTRIFUGE' {
+		memory = '100.GB'
+                cpus = '30'
+                time = '24.h'
+        }
+	withName: 'TAXPASTA_MERGE' {
+		errorStrategy = 'ignore'
+		memory = '24.GB'
+		cpus = '1'
+		time = '4.h'
+	}
+	withName: 'MOTUS_PROFILES' {
+		memory = '50.GB'
+		cpus = 30
+	}
+	withName: 'SYLPH_PROFILE'{
+		memory = '30.GB'
+		cpus = 30
+	}
+	withName: 'MELON' {
+		memory = '64.GB'
+		cpus = 30
+	}
+	withName: 'MOTUS_PREPLONG' {
+		memory = '8.GB'
+		cpus = 8
+		time = '16.h'
+	}
+	
+}
+```
+
+#### deNBI cloud
+
+For `custom.config`:
 
 ```{groovy}
 process {
@@ -128,12 +339,182 @@ process {
                 memory = '24.GB'
                 cpus = '1'
         }
+        withName: 'KRAKEN2_KRAKEN2' {
+                memory = '144.GB'
+                cpus = 24
+        }
 }
 ```
 
+For `custom_small_ont.config`:
+
+```{groovy}
+process {
+        withName: 'FASTQC' {
+                memory = '8.GB'
+                cpus = 5
+                time = '24.d'
+        }
+        withName: 'PORECHOP_ABI' {
+                memory = '120.GB'
+                cpus = 12
+                time = '24.d'
+        }
+        withName: 'NANOQ' {
+                memory = '4.GB'
+                cpus = 4
+                time = '24.d'
+        }
+        withName: 'MINIMAP2_ALIGN' {
+                memory = '28.GB'
+                cpus = 12
+                time = '24.d'
+        }
+        withName: 'SAMTOOLS_STATS' {
+                memory = '12.GB'
+                cpus = 4
+                time = '24.d'
+        }
+        withName: 'FASTQC_PROCESSED' {
+                memory = '24.GB'
+                cpus = 7
+                time = '24.d'
+        }
+        withName: 'SAMTOOLS_VIEW' {
+                memory = '4.GB'
+                cpus = 4
+                time = '24.d'
+        }
+        withName: 'SAMTOOLS_FASTQ' {
+                memory = '4.GB'
+                cpus = 4
+                time = '24.d'
+        }
+        withName: 'METACACHE_QUERY' {
+                memory = '100.GB'
+                cpus = 12
+                time = '24.d'
+        }
+        withName: 'SYLPH_PROFILE' {
+                memory = '16.GB'
+                cpus = 7
+                time = '24.d'
+        }
+        withName: 'SYLPHTAX_TAXPROF' {
+                memory = '4.GB'
+                cpus = 4
+                time = '24.d'
+        }
+        withName: 'KAIJU_KAIJU' {
+                memory = '64.GB'
+                cpus = 28
+                time = '24.d'
+        }
+        withName: 'KAIJU_KAIJU2TABLE_SINGLE' {
+                memory = '4.GB'
+                cpus = 4
+                time = '24.d'
+        }
+        withName: 'KAIJU_KREPORT2KRONA' {
+                memory = '4.GB'
+                cpus = 4
+                time = '24.d'
+        }
+        withName: 'CENTRIFUGE_CENTRIFUGE' {
+                memory = '48.GB'
+                cpus = 12
+                time = '24.d'
+        }
+        withName: 'CENTRIFUGE_KREPORT' {
+                memory = '4.GB'
+                cpus = 4
+                time = '24.d'
+        }
+        withName: 'MELON' {
+                memory = '32.GB'
+                cpus = 14
+                time = '24.d'
+        }
+        withName: 'MOTUS_PREPLONG' {
+                memory = '4.GB'
+                cpus = 4
+                time = '24.d'
+        }
+        withName: 'MOTUS_PROFILE' {
+                memory = '32.GB'
+                cpus = 14
+                time = '24.d'
+        }
+        withName: 'DIAMOND_BLASTX' {
+                memory = '32.GB'
+                cpus = 14
+                time = '24.d'
+        }
+        withName: 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ' {
+                memory = '900.GB'
+                cpus = 56
+                time = '24.d'
+        }
+        withName: 'KAIJU_KAIJU2TABLE_COMBINED' {
+                memory = '4.GB'
+                cpus = 4
+                time = '24.d'
+        }
+        withName: 'TAXPASTA_MERGE' {
+                memory = '7.GB'
+        }
+}
+```
+
+## Execution (Ancient DNA Illumina)
+
+We can then run nf-core/taxprofiler on this dataset of 3 differently depth-sequenced sequencing runs with the databases we generated previously.
+
+### 30k
+
+(Note: we had to run on different infrastructure due to wall-time restrictions, compared to the smaller database runs).
+
+For example, for the full dataset of just under ~30,000 genomes:
+
+```{bash}
+#| eval: false
+nextflow run nf-core/taxprofiler \
+ -r 2.0.0 \
+ --input /vol/permanent/benchmarking/samplesheets/taxprofiler-samplesheet_denbi.csv \
+ --databases /vol/permanent/benchmarking/samplesheets/taxprofiler-databases_denbi30000.csv \
+ -name txp_benchmark_30000 \
+ --outdir /vol/permanent/benchmarking/taxprofiler/results_illumina_30000/ \
+ --perform_shortread_qc \
+ --shortread_qc_dedup \
+ --perform_shortread_complexityfilter \
+ --perform_shortread_redundancyestimation \
+ --perform_shortread_hostremoval \
+ --hostremoval_reference /vol/permanent/benchmarking/reference/human-t2t-hla.fa.gz \
+ --shortread_hostremoval_index /vol/permanent/benchmarking/reference/ \
+ --run_bracken \
+ --run_centrifuge \
+ --run_diamond \
+ --run_ganon \
+ --run_kaiju \
+ --run_kmcp \
+ --run_kraken2 \
+ --run_krakenuniq \
+ --run_melon \
+ --run_metacache \
+ --run_metaphlan \
+ --run_motus \
+ --run_sylph \
+ --run_profile_standardisation \
+ --run_krona \
+ --taxpasta_taxonomy_dir /vol/permanent/benchmarking/auxiliary_files/ \
+ --sylph_taxonomy /vol/permanent/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
+ -c custom.config
+```
+
+
 ### 20k
 
-Note: we had to run on different infrastructure due to walltime restrictions
+Note: we had to run on different infrastructure due to walltime restrictions.
 
 ```{bash}
 #| eval: false
@@ -172,7 +553,7 @@ nextflow run nf-core/taxprofiler \
 
 ### 10k
 
-Note: we had to run on different infrastructure due to walltime restrictions
+Note: we had to run on different infrastructure due to walltime restrictions.
 
 ```{bash}
 #| eval: false
@@ -245,58 +626,6 @@ nextflow run nf-core/taxprofiler \
  --taxpasta_taxonomy_dir /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/ \
  --sylph_taxonomy /ptmp/jfellowsy/projects/taxprofiler-createtaxdb-paper/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
  -c custom_small.config
-```
-
-The final custom config (optimised for use on this particular infrastructure) on the two infrastructures used for testing was:
-
-```{groovy}
-process {
-	withName: 'FASTP_PAIRED' {
-		cpus   = 24
-		memory = '110.GB'
-	}
-	withName: 'NONPAREIL_NONPAREIL' {
-		ext.args = { "-k 12" } ## aDNA reads are very short
-	} 
-        withName: 'KAIJU_KAIJU' {
-                memory = '100.GB'
-                cpus   = '18'
-        }
-        withName: 'GANON_CLASSIFY' {
-                memory = '72.GB'
-                cpus   = '18'
-        }
-        withName: 'KRAKEN2_KRAKEN2'{
-                memory = '240.GB'
-                cpus   = '72'
-        }
-        withName: 'BRACKEN_BRACKEN'{
-                memory = '240.GB'
-                cpus   = '72'
-        }
-        withName: 'METACACHE_QUERY' {
-                memory = '240.GB'
-                cpus = '72'
-        }
-        withName: 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ' {
-                memory = '2047.GB'
-                cpus = '72'
-                time = '24.h'
-        }
-        withName: 'CENTRIFUGE_CENTRIFUGE' {
-                memory = '2047.GB'
-                cpus = '72'
-                time = '24.h'
-        }
-	withName: 'TAXPASTA_MERGE' {
-		errorStrategy = 'ignore' ## Due to bug in MetaPhlAn
-		memory = '24.GB'
-		cpus = '1'
-		time = '4.h'
-	}
-}
-
-
 ```
 
 ### 2k
@@ -377,6 +706,8 @@ nextflow run nf-core/taxprofiler \
 
 ### Aggregation
 
+To get all the hard drive usage statistics (although not used for final plotting).
+
 ```{bash}
 #| eval: false
 ## WHILE IN `taxprofiler/`
@@ -385,7 +716,7 @@ for i in results_illumina_*; do du --max-depth 1 $i >> ../resource_tracking/taxp
 for i in results_illumina_*; do du -h --max-depth 1 $i >> ../resource_tracking/taxprofiler_illumina/taxprofiler_illumina_resource_usage_humanreadable.tsv; done
 ```
 
-To get all trace files
+And to get all trace files.
 
 ```{bash}
 for i in results_illumina_*; do
@@ -396,11 +727,11 @@ done
 
 ## Execution (Nanopore dataset)
 
-We do not run MetaPhlan due to a known problem with <= v4.1 (the version in nf-core/taxprofiler) and long read data, where BowTie2 would require too much memory.
+We did not run MetaPhlan due to a [known problem](https://forum.biobakery.org/t/metaphlan-4-x-support-for-long-reads/7948) with <= v4.1 (the version in nf-core/taxprofiler) and long read data, where Bowtie2 would require too much memory.
 
 ### 30k
 
-Note: had to run this on other infrastructure due to walltime limitations
+Note: had to run this on other infrastructure due to walltime limitations.
 
 ```{bash}
 #| eval: false
@@ -432,102 +763,6 @@ nextflow run nf-core/taxprofiler \
  --sylph_taxonomy /vol/permanent/benchmarking/auxiliary_files/sylph_taxonomy.tsv \
  -c custom_small_ont.config
 ```
-
-
-The config: `custom_small_ont.config` contained:
-
-```{groovy}
-#| eval: false
-process {
-	withName: 'FASTP_PAIRED' {
-		cpus   = 24
-		memory = '90.GB'
-	}
-  withName: 'PORECHOP_ABI' {
-          cpus = 24
-          memory = '110.GB'
-  }
-  withName: 'NANOQ' {
-          cpus = 24
-          memory = '110.GB'
-  }
-	withName: 'SAMTOOLS_STATS' {
-		memory = '32.GB'
-	}
-	withName: 'NONPAREIL_NONPAREIL' {
-		ext.args = "-k 15"
-	} 
-  withName: 'KAIJU_KAIJU' {
-          memory = '50.GB'
-          cpus   = '30'
-  }
-  withName: 'GANON_CLASSIFY' {
-          memory = '15.GB'
-          cpus   = '30'
-  }
-	withName: 'DIAMOND_BLASTX' {
-		memory = '50.GB'
-		cpus = '30'
-	}
-	withName: 'KMCP_PROFILE' {
-		memory = '50.GB'
-		cpus = '30'
-		time = '24.h'
-	}
-	withName: 'KMCP_SEARCH' {
-		memory = '50.GB'
-		cpus = '30'
-	}
-  withName: 'KRAKEN2_KRAKEN2'{
-          memory = '100.GB'
-          cpus   = '30'
-  }
-  withName: 'BRACKEN_BRACKEN'{
-          memory = '10.GB'
-          cpus   = '30'
-  }
-  withName: 'METACACHE_QUERY' {
-          memory = '100.GB'
-          cpus = '30'
-  }
-  withName: 'KRAKENUNIQ_PRELOADEDKRAKENUNIQ' {
-          memory = '500.GB'
-          cpus = '72'
-          time = '24.h'
-  }
-  withName: 'CENTRIFUGE_CENTRIFUGE' {
-          memory = '100.GB'
-          cpus = '30'
-          time = '24.h'
-  }
-	withName: 'TAXPASTA_MERGE' {
-		errorStrategy = 'ignore'
-		memory = '24.GB'
-		cpus = '1'
-		time = '4.h'
-	}
-	withName: 'MOTUS_PROFILES' {
-		memory = '50.GB'
-		cpus = 30
-	}
-	withName: 'SYLPH_PROFILE'{
-		memory = '30.GB'
-		cpus = 30
-	}
-	withName: 'MELON' {
-		memory = '64.GB'
-		cpus = 30
-	}
-	withName: 'MOTUS_PREPLONG' {
-		memory = '8.GB'
-		cpus = 8
-		time = '16.h'
-	}
-	
-}
-
-```
-
 
 ### 20k
 
@@ -702,17 +937,21 @@ nextflow run nf-core/taxprofiler \
 
 ### Aggregation
 
+To aggregate all the results directory `du` commands all into one file (even if not used for plotting in the end), we can use the following:
+
 ```{bash}
 #| eval: false
-## WHILE IN `taxprofiler/`
+## Reminder, must be in `taxprofiler/`
 mkdir -p ../resource_tracking/taxprofiler_ont/
 for i in results_ont_*; do du --max-depth 1 $i >> ../resource_tracking/taxprofiler_ont/taxprofiler_ont_resource_usage_raw.tsv; done
 for i in results_ont_*; do du -h --max-depth 1 $i >> ../resource_tracking/taxprofiler_ont/taxprofiler_ont_resource_usage_humanreadable.tsv; done
 ```
 
-To get all trace files
+And to get all trace files
 
 ```{bash}
+#| eval: false
+## Reminder, must be in `taxprofiler/`
 for i in results_ont_*; do
   mkdir ../resource_tracking/taxprofiler_ont/"$i"/
   cp -r "$i"/pipeline_info/ ../resource_tracking/taxprofiler_ont/"$i"/pipeline_info/

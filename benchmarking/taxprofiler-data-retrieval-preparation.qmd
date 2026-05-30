@@ -10,18 +10,15 @@ This notebook describes to retrieve the data used for nf-core/taxprofiler benchm
 
 For this benchmarking, we will perform two analyses on real datasets:
 
+- Illumina short-read ancient DNA (PRJEB44507, [Maixer et al. 2022](https://doi.org/10.1038/s41564-022-01270-1))
+- Oxford Nanopore long-read activated sludge (PRJNA803959, [Liu et al. 2022](https://doi.org/10.1186/s40168-022-01415-8))
+
 ## Requirements
 
 Command line tools used in this notebook includes:
 
 - `curl` (v8.5.0 (x86_64-pc-linux-gnu))
-- hostile (v2.0.2)
-
-All R based code blocks below required the following
-
-```{r}
-## No R packages used
-```
+- `hostile` (v2.0.2)
 
 A conda environment file is available, if you have pixi/mamba/conda installed:
 
@@ -30,18 +27,37 @@ A conda environment file is available, if you have pixi/mamba/conda installed:
 conda env create -f environment.yaml 
 ```
 
+Additionally, the following software is used but from independent conda environments (see below).
+
+- `motus` (v3.1.0)
+- `melon` (v0.2.5) 
+- `metaphlan` (v4.1.1)
+
 :::{.callout-warning}
-Most code blocks are set to `eval: false` to prevent re-sampling of files, resulting
-in inconsistent results across runs.
+Most code blocks are set to `eval: false` to prevent downloading large files.
+Please run these code blocks manually.
 :::
+
+## Preparation
+
+We just need to make two directories for storing the files.
+
+```{bash}
+#| eval: false
+mkdir reference/
+mkdir sequencing_reads/
+```
 
 ### Host removal genome
 
-As the samples are human palaeofaeces, and have been handled by human archaeologists and palaeogenomicsts, we will assume the human DNA will be some of the largest 'contaminants' in the sample.
+For the Illumina dataset, as the samples are human palaeofaeces, and have been handled by human archaeologists and palaeogenomicists, we will assume the human DNA will be some of the largest 'contaminants' in the sample.
 
-We will use the optimised reference telomere-to-telomere plus HLA sequences offered by the tool [`hostile`](https://github.com/bede/hostile).
+While the activated sludge dataset is an environmental sample, thus does not have a 'host', we will still use the human reference genome as lab-derived human DNA remains a common contamination in both sequencing reads but also in reference genomes in the classification database.
+
+Therefore will use the optimised reference telomere-to-telomere plus HLA sequences offered by the tool [`hostile`](https://github.com/bede/hostile).
 
 ```{bash}
+#| eval: false
 mkdir reference/
 export HOSTILE_CACHE_DIR=$(readlink -f reference/)
 hostile index fetch --name human-t2t-hla --bowtie2 --minimap2
@@ -49,13 +65,12 @@ hostile index fetch --name human-t2t-hla --bowtie2 --minimap2
 
 ### Ancient DNA dataset (Illumina) 
 
-To test resource usage on different sequencing depths, we will use a sample from [Maixer 2022](https://doi.org/10.1038/s41564-022-01270-1), where an ancient palaeofaeces sequencing library was sequenced multiple times at different depths.
+To test computational resource usage on different sequencing depths of short-reads, we will use a sample from [Maixer 2022](https://doi.org/10.1038/s41564-022-01270-1), where an ancient palaeofaeces sequencing library was Illumina sequenced multiple times at different depths.
+
+To download the files:
 
 ```{bash}
 #| eval: false
-
-mkdir sequencing_reads/
-
 curl -o sequencing_reads/PRJEB44507.tsv "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJEB44507&result=read_run&fields=study_accession,sample_accession,secondary_sample_accession,experiment_accession,run_accession,tax_id,scientific_name,instrument_platform,instrument_model,library_name,nominal_length,library_layout,library_strategy,library_source,library_selection,read_count,fastq_bytes,fastq_md5,fastq_ftp,submitted_bytes,submitted_md5,submitted_ftp,submitted_aspera,submitted_format,sra_ftp,sample_alias,sample_title,bam_ftp&format=tsv&download=true&limit=0"
 grep -e "/2604" sequencing_reads/PRJEB44507.tsv > sequencing_reads/PRJEB44507_2604only.tsv
 
@@ -67,7 +82,7 @@ for i in $(awk -F '\t' '{ print $19 }' sequencing_reads/PRJEB44507_2604only.tsv 
 done
 ```
 
-Once downloaded, we can write create the samplesheet in `../samplesheets/`, which looks like this:
+Once downloaded, we can write manually write athe samplesheet in `../samplesheets/`, which looks like this.
 
 ```{csv}
 sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
@@ -84,12 +99,7 @@ Where each sample name corresponds to
 
 ### Activated sludge dataset (Nanopore)
 
-
-- https://link.springer.com/article/10.1186/s40168-022-01415-8#Sec9
-  - Activated sludge sample
-  - 5 flowcells 
-  - Data: PRJNA803959
-  - depths: 2463130, 3568397, 4022194, 4329789, 5235163
+To test computational resource usage on different sequencing depths of long-reads, we will use a sample from [Liu et al, 2022](https://doi.org/10.1186/s40168-022-01415-8), where an activated slude sample Oxford Nanopore sequenced across 5 flow cells at different depths (Nr. reads: 2463130, 3568397, 4022194, 4329789, 5235163)
 
 ```{bash}
 curl -o sequencing_reads/PRJNA803959.tsv "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA803959&result=read_run&fields=study_accession,sample_accession,secondary_sample_accession,experiment_accession,run_accession,tax_id,scientific_name,instrument_platform,instrument_model,library_name,nominal_length,library_layout,library_strategy,library_source,library_selection,read_count,fastq_bytes,fastq_md5,fastq_ftp,submitted_bytes,submitted_md5,submitted_ftp,submitted_aspera,submitted_format,sra_ftp,sample_alias,sample_title,bam_ftp&format=tsv&download=true&limit=0"
@@ -101,6 +111,8 @@ for i in $(awk -F '\t' '{ print $19 }' sequencing_reads/PRJNA803959_Asamplesonly
   curl $(echo $i | cut -d ';' -f 1) --remote-name --create-dirs --output-dir sequencing_reads
 done
 ```
+
+We again make a sample sheet, where we have appended the number of sequencing reads to the flowcell name (e.g. `24_` corresponds to 2.4 million reads).
 
 ```{csv}
 sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
@@ -114,26 +126,40 @@ sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
 ### Databases
 
 Most of the databases were generated with nf-core/createtaxdb.
-Two tools however do not provide customisation, and pre-built provided databases must be used.
+Three tools however do not provide customisation, and pre-built provided databases must be used.
+
+In this case I create separate conda environments for separate reuse.
+
+I placed these directories in a suitable place on the executing infrastructure.
+
+For mOTUs:
 
 ```{bash}
-### motus
-conda create -n motus -c bioconda motus=3 -y
+#| eval: false
+conda create -n motus -c bioconda motus=3.1 -y
 conda activate motus
 motus downloadDB
 conda deactivate
 
 find /u/jfellowsy/bin/miniconda3/envs/motus -name 'db_*' -type d ## Specific to my filesystem
 ln -s ~/bin/miniconda3/envs/motus/lib/python3.9/site-packages/motus/db_mOTU .  ## Specific to my filesystem
+```
 
-### metaphlan
+For MetaPhlAn:
+
+```{bash}
+#| eval: false
 conda deactivate
 conda create -n metaphlan -c bioconda metaphlan=4.1.1 -y
 conda activate metaphlan
 metaphlan --install --db_dir metaphlan/
-
-### melon (RUN DIAMOND/MINIMAP ON COMPUTE NODE!)
 conda deactivate
+```
+
+For Melon (important! Must run on compute node due to DIAMOND step!)
+
+```{bash}
+#| eval: false
 conda create -n melon -c bioconda melon==0.2.5 -y
 
 wget -qN --show-progress https://zenodo.org/records/12571302/files/database.tar.gz
@@ -149,10 +175,10 @@ ls database/nucl.*.fa | sort | xargs -P $cpu_count -I {} bash -c '
     echo "Indexed <database/$filename.fa>.";
 ' - {}
 
-
 ## remove unnecessary files to save space
 rm -rf database/*.fa
 
 conda deactivate
 ```
 
+The directories for these databases were manually added to the nf-core/createtaxdb created samplesheets for use in nf-core/taxprofiler under `samplesheets/`.

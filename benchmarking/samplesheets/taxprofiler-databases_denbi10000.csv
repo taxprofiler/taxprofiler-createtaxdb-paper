@@ -1,0 +1,14 @@
+tool,db_name,db_params,db_type,db_path
+sylph,benchmark_10000-sylph,,,/vol/permanent/benchmarking/databases/results_10000/sylph/benchmark_10000-sylph.syldb
+diamond,benchmark_10000-diamond,,,/vol/permanent/benchmarking/databases/results_10000/diamond/benchmark_10000-diamond.dmnd
+ganon,benchmark_10000-ganon,,,/vol/permanent/benchmarking/databases/results_10000/ganon/
+metacache,benchmark_10000-metacache,,,/vol/permanent/benchmarking/databases/results_10000/metacache/
+kmcp,benchmark_10000-kmcp,,,/vol/permanent/benchmarking/databases/results_10000/kmcp/benchmark_10000-kmcp-index
+kaiju,benchmark_10000-kaiju,,,/vol/permanent/benchmarking/databases/results_10000/kaiju/
+kraken2,benchmark_10000-kraken2,,,/vol/permanent/benchmarking/databases/results_10000/kraken2/benchmark_10000-kraken2/
+bracken,benchmark_10000-bracken,,,/vol/permanent/benchmarking/databases/results_10000/bracken/benchmark_10000-bracken
+centrifuge,benchmark_10000-centrifuge,,,/vol/permanent/benchmarking/databases/results_10000/centrifuge/benchmark_10000-centrifuge
+krakenuniq,benchmark_10000-krakenuniq,,,/vol/permanent/benchmarking/databases/results_10000/krakenuniq/benchmark_10000-krakenuniq
+motus,benchmark_10000-motus,,,/vol/permanent/benchmarking/databases/results_10000/motus/db_mOTU/
+melon,benchmark_10000-melon,,,/vol/permanent/benchmarking/databases/results_10000/melon/database
+metaphlan,benchmark_10000-metaphlan,,,/vol/permanent/benchmarking/databases/results_10000/metaphlan

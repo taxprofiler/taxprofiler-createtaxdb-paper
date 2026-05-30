@@ -416,10 +416,18 @@ samplesheet <- final_paths_all |>
 
 And save.
 
+```{bash}
+#| eval: false
+mkdir samplesheets/
+```
+
 ```{r}
 #| eval: false
 write_csv(samplesheet, 'samplesheets/createtaxdb-samplesheet.csv')
 ```
+
+Note: at this point I will make copies and manually edit the samplesheets to ensure they execute safely on the infrastructure (e.g. ensuring full paths etc.), with the name of the infrastructure appended to the end of the file name.
+For example: `samplesheets/createtaxdb-samplesheet.csv` becomes `samplesheets/createtaxdb-samplesheet_raven.csv`.
 
 ## Side analysis
 
@@ -455,9 +463,18 @@ I will randomly subset to the following number of genomes:
 - 2,000
 - 1,000
 
+:::{.callout-warning}
+This subsampling is non-deterministic, do not run if you want to reproduce the exact files!
+:::
+
 ```{r}
 #| eval: false
 for (i in c(20000,10000,5000,2000,1000) ) {
-  samplesheet_raven |> sample_n(i) |> write_csv(paste0('createtaxdb-samplesheet_raven', i, '.csv'))
+  samplesheet_raven |> 
+    sample_n(i) |> 
+    write_csv(paste0('createtaxdb-samplesheet_raven', i, '.csv'))
 }
 ```
+
+
+
