@@ -23,6 +23,14 @@ conda install bioconda::taxonkit
 
 ## Data retrieval
 
+:::{.callout-warning}
+All commands related to NCBI downloads and parsing of NCBI-relted files may need modification to reflect the current version of the files, as these formats change over time.
+
+Furthermore, due to their popularity, stability of NCBI servers can sometimes be variable and downloads may fail.
+Be aware that you may require re-tries to get complete downloads.
+:::
+
+
 ### NCBI files
 Download the auxiliary taxonomy metadata files necessary to build the databases for the clinical metagenomics case study as also described in the nf-core/createtaxdb documentation.These files include:
 

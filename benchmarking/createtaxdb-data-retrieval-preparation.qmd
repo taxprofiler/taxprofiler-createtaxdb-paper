@@ -9,6 +9,12 @@ format: html
 This notebook describes how the genomes for testing nf-core/createtaxdb in the resource-usage benchmarking were
 selected.
 
+:::{.callout-warning}
+This notebook will require a large amount of disk space to run, as it will download a large number bacterial, archaeal and viral genomes from the NCBI RefSeq collection.
+
+At the time of publication, this was approximately 30-40 GB of raw FASTA files.
+:::
+
 ## Requirements
 
 Command line tools used in this notebook includes:
@@ -40,6 +46,13 @@ in inconsistent results across runs.
 :::
 
 ## Retriving genome metadata
+
+:::{.callout-warning}
+All commands related to NCBI downloads and parsing of NCBI-relted files may need modification to reflect the current version of the files, as these formats change over time.
+
+Furthermore, due to their popularity, stability of NCBI servers can sometimes be variable and downloads may fail.
+Be aware that you may require re-tries to get complete downloads.
+:::
 
 Download the relevant assembly summary files from the NCBI Genomes RefSeq database collection (downloaded on 2026-03-05).
 
