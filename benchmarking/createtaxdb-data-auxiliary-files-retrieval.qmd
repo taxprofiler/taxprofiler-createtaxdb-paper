@@ -9,7 +9,7 @@ format: html
 In addition to the reference genome files themselves, most classifier database building tools require auxiliary taxonomy metadata files.
 
 Not all classifiers use the same taxonomy files.
-Therefore we will need to download and prepare a range of files for the building itself.
+Therefore, we will need to download and prepare a range of files for the building itself.
 
 More information about what is contained by these files can be found on the [nf-core/createtaxdb FAQ](https://nf-co.re/createtaxdb/2.1.0/docs/usage/usage/faq/).
 
@@ -25,6 +25,13 @@ Command line tools used in this notebook includes:
 - `csvtk` (v0.37.0)
 
 ## Download and prepare files
+
+:::{.callout-warning}
+All commands related to NCBI downloads and parsing of NCBI-relted files may need modification to reflect the current version of the files, as these formats change over time.
+
+Furthermore, due to their popularity, stability of NCBI servers can sometimes be variable and downloads may fail.
+Be aware that you may require re-tries to get complete downloads.
+:::
 
 ### NCBI taxdump files
 
