@@ -465,6 +465,10 @@ I will randomly subset to the following number of genomes:
 
 :::{.callout-warning}
 This subsampling is non-deterministic, do not run if you want to reproduce the exact files!
+
+At the good suggestion of one of the reviewers: if you are aiming to reproduce the analysis here, in the future you should set a seed with `set.seed()` to get the same sampling each time you run.
+
+In this, case, please see the resulting files from the original sampling under `benchmarking/samplesheets/createtaxdb*`.
 :::
 
 ```{r}
@@ -476,5 +480,62 @@ for (i in c(20000,10000,5000,2000,1000) ) {
 }
 ```
 
+The domain-level proportions in each resulting sub-sampled samplesheet is as follows:
 
+```{r}
+## Load assembly to domain 
+raw_domain_only <- raw |> select(`#assembly_accession`, group) |> rename(id = `#assembly_accession`)
 
+## Load subsamples
+all_subsample_files <- Sys.glob("samplesheets/createtaxdb-samplesheet_raven[1-5]**") |>
+  enframe() |>
+  mutate(
+    file_contents = map(
+      value,
+      ~ suppressMessages(read_csv(.x))
+    )
+  )
+
+## Load all files
+all_subsample_tables <- all_subsample_files |>
+  mutate(
+    subsample_level = map(
+      value,
+      ~ str_remove(.x, "samplesheets/createtaxdb-samplesheet_raven")
+    ) |> unlist(),
+    subsample_level = map(
+      subsample_level,
+      ~ str_remove(.x, ".csv")
+    ) |>
+      unlist()
+  ) |>
+  unnest(cols = c(file_contents)) |> 
+  select(subsample_level, id, taxid)
+
+## Join two tables together
+all_subsample_tables_domains <- all_subsample_tables |> left_join(raw_domain_only)
+```
+
+We can now calculate the proportion of assembly accession come from each domain for each subsampled samplesheet of genomes.
+
+```{r}
+all_subsample_tables_domain_summary <- all_subsample_tables_domains |>
+  group_by(subsample_level, group) |>
+  summarise(domain_count = n()) |>
+  mutate(
+    domain_total = sum(domain_count),
+    subsample_level = as.numeric(subsample_level),
+    domain_pct = round((domain_count / domain_total) * 100, 1)
+    ) |> 
+  arrange(subsample_level, group) |> 
+  mutate(subsample_level = as_factor(subsample_level))
+```
+
+We can also plot this in a simple barchart:
+
+```{r}
+ggplot(all_subsample_tables_domain_summary, aes(x = subsample_level, domain_pct, fill = group)) +
+  geom_col() +
+  scale_discrete_manual(aesthetics = 'fill', values = c('#1f78b4', '#e3211c', '#fdbf6f')) +
+  theme_bw()
+```
