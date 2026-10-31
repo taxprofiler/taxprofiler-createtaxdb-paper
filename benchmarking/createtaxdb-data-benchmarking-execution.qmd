@@ -14,6 +14,12 @@ Command line tools used in this notebook includes:
 
 - `nextflow` (version 25.10.4 build 11173)
 
+:::{.callout-warning}
+If reproducing this analysis, be aware the databases being generated are very large.
+
+At the time of publication, the total disk space required to construct all tested databases was approximately 3 TB hard drive space.
+:::
+
 ## Retrieving pipeline
 
 We will benchmarking with v3.0.0 of nf-core/createtaxdb with Nextflow version 25.10.4.
