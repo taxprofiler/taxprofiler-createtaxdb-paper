@@ -547,8 +547,18 @@ all_subsample_tables_domain_summary <- all_subsample_tables_domains |>
 We can also plot this in a simple barchart:
 
 ```{r}
-ggplot(all_subsample_tables_domain_summary, aes(x = subsample_level, domain_pct, fill = group)) +
+subsample_distribution_plot <- ggplot(all_subsample_tables_domain_summary, aes(x = subsample_level, domain_pct, fill = group)) +
   geom_col() +
   scale_discrete_manual(aesthetics = 'fill', values = c('#1f78b4', '#e3211c', '#fdbf6f')) +
-  theme_bw()
+  theme_bw() +
+  labs(
+    x = 'Nr. genomes in database',
+    y = 'Proportion of genomes from taxonomic kingdom',
+    fill = 'Kingdom'
+  )
+
+subsample_distribution_plot
+
+ggsave(subsample_distribution_plot, filename = 'figS6-database_subsample_distribution_plot.png', device = 'png', height = 4)
+
 ```
