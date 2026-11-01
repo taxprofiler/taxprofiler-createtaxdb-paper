@@ -27,7 +27,7 @@ Command line tools used in this notebook includes:
 ## Download and prepare files
 
 :::{.callout-warning}
-All commands related to NCBI downloads and parsing of NCBI-relted files may need modification to reflect the current version of the files, as these formats change over time.
+All commands related to NCBI downloads and parsing of NCBI-related files may need modification to reflect the current version of the files, as these formats change over time.
 
 Furthermore, due to their popularity, stability of NCBI servers can sometimes be variable and downloads may fail.
 Be aware that you may require re-tries to get complete downloads.
